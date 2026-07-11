@@ -2086,9 +2086,9 @@ async function fetchSupabaseQuestionMetadata(module, courses) {
 }
 
 async function saveQuizSessionToSupabase({ mode, simulationBranch, scoringMode, questions, answers, score, totalQuestions, duration, moduleClass, course }) {
-    if (!isSupabaseEnabled() || !currentUser) return;
+    if (!isSupabaseEnabled() || !currentUser?.supabaseId) return;
     const sessionData = {
-        student_id: currentUser.id,
+        student_id: currentUser.supabaseId,
         mode, simulation_branch: simulationBranch, scoring_mode: scoringMode,
         questions, answers, score, total_questions: totalQuestions, duration,
         module_class: moduleClass || null, course: course || null,
@@ -2690,7 +2690,8 @@ async function handleLogin(e) {
         currentUser = {
             id: existing.id, name: existing.name, email: existing.email,
             level: existing.level, is_validated: existing.is_validated ?? false,
-            subscription_status: existing.subscription_status || (existing.is_validated ? 'full' : 'trial')
+            subscription_status: existing.subscription_status || (existing.is_validated ? 'full' : 'trial'),
+            supabaseId: existing.supabaseId || null
         };
         isAdmin = false;
         document.getElementById('landing-section').classList.add('hidden');
@@ -2827,58 +2828,41 @@ function renderStudentDashboard() {
         const hours = Math.floor(totalTime / 3600);
         const minutes = Math.floor((totalTime % 3600) / 60);
         const successRate = totalQ > 0 ? Math.round((totalScore / totalQ) * 100) + '%' : '--';
-
-        // Calcul streak
         const dates = [...new Set(sessions.map(s => s.date?.split('T')[0]))].filter(Boolean);
         const streak = computeStreak(dates);
-
         return { totalQ, successRate, timeStr: hours > 0 ? `${hours}h${minutes > 0 ? minutes : ''}` : `${minutes}m`, streak };
     }
 
-    if (isSupabaseEnabled() && currentUser?.id) {
+    const ls = computeLocalStats();
+    document.getElementById('stat-total-qcm').textContent = ls.totalQ || mockQuestions.length;
+    document.getElementById('stat-success-rate').textContent = ls.successRate;
+    document.getElementById('stat-study-time').textContent = ls.timeStr;
+    document.getElementById('stat-streak').textContent = ls.streak;
+
+    if (isSupabaseEnabled() && currentUser?.supabaseId) {
         (async () => {
             try {
-                const { count: totalQcm, error: err1 } = await supabaseClient
-                    .from('questions').select('*', { count: 'exact', head: true });
-                if (!err1 && totalQcm !== null) {
-                    document.getElementById('stat-total-qcm').textContent = totalQcm;
-                }
                 const { data: sessions, error: err2 } = await supabaseClient
-                    .from('quiz_sessions').select('score, total_questions, duration, finished_at').eq('student_id', currentUser.id).order('finished_at', { ascending: false });
+                    .from('quiz_sessions').select('score, total_questions, duration, finished_at').eq('student_id', currentUser.supabaseId).order('finished_at', { ascending: false });
                 if (!err2 && sessions && sessions.length > 0) {
-                    const totalScore = sessions.reduce((s, ses) => s + (ses.score || 0), 0);
-                    const totalQ = sessions.reduce((s, ses) => s + (ses.total_questions || 0), 0);
+                    const localSessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
+                    const allSessions = [...sessions.map(s => ({
+                        score: s.score, total_questions: s.total_questions, duration: s.duration,
+                        date: s.finished_at, finished_at: s.finished_at
+                    })), ...localSessions];
+                    const totalScore = allSessions.reduce((s, ses) => s + (ses.score || 0), 0);
+                    const totalQ = allSessions.reduce((s, ses) => s + (ses.total_questions || 0), 0);
+                    document.getElementById('stat-total-qcm').textContent = totalQ;
                     document.getElementById('stat-success-rate').textContent = totalQ > 0 ? Math.round((totalScore / totalQ) * 100) + '%' : '--';
-                    const totalTime = sessions.reduce((s, ses) => s + (ses.duration || 0), 0);
+                    const totalTime = allSessions.reduce((s, ses) => s + (ses.duration || 0), 0);
                     const hours = Math.floor(totalTime / 3600);
                     const minutes = Math.floor((totalTime % 3600) / 60);
                     document.getElementById('stat-study-time').textContent = hours > 0 ? `${hours}h${minutes > 0 ? minutes : ''}` : `${minutes}m`;
-                    const dates = [...new Set(sessions.map(s => s.finished_at?.split('T')[0]))].filter(Boolean);
-                    const streak = computeStreak(dates);
-                    document.getElementById('stat-streak').textContent = streak;
-                } else {
-                    // Fallback localStorage si Supabase sans sessions
-                    const ls = computeLocalStats();
-                    document.getElementById('stat-total-qcm').textContent = mockQuestions.length;
-                    document.getElementById('stat-success-rate').textContent = ls.successRate;
-                    document.getElementById('stat-study-time').textContent = ls.timeStr;
-                    document.getElementById('stat-streak').textContent = ls.streak;
+                    const dates = [...new Set(allSessions.map(s => (s.finished_at || s.date || '').split('T')[0]))].filter(Boolean);
+                    document.getElementById('stat-streak').textContent = computeStreak(dates);
                 }
-            } catch (e) {
-                console.warn('Dashboard load error:', e);
-                const ls = computeLocalStats();
-                document.getElementById('stat-total-qcm').textContent = mockQuestions.length;
-                document.getElementById('stat-success-rate').textContent = ls.successRate;
-                document.getElementById('stat-study-time').textContent = ls.timeStr;
-                document.getElementById('stat-streak').textContent = ls.streak;
-            }
+            } catch (e) { console.warn('Dashboard Supabase merge error:', e.message); }
         })();
-    } else {
-        const ls = computeLocalStats();
-        document.getElementById('stat-total-qcm').textContent = mockQuestions.length;
-        document.getElementById('stat-success-rate').textContent = ls.successRate;
-        document.getElementById('stat-study-time').textContent = ls.timeStr;
-        document.getElementById('stat-streak').textContent = ls.streak;
     }
 }
 
@@ -5110,22 +5094,20 @@ function renderStats() {
     if (window._scoreChart) { window._scoreChart.destroy(); window._scoreChart = null; }
     const moduleModules = ['Module Biologique', 'Module Fondamental', 'Module Pharmaceutique'];
     (async () => {
-        let sessions = [];
-        if (isSupabaseEnabled() && currentUser) {
+        let sessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
+        if (isSupabaseEnabled() && currentUser?.supabaseId) {
             try {
-                const cached = getQuestionsCache();
-                if (cached && cached._sessions) {
-                    sessions = cached._sessions.filter(s => s.student_id === currentUser.id);
-                } else {
-                    const { data } = await supabaseClient.from('quiz_sessions').select('*').eq('student_id', currentUser.id).order('finished_at', { ascending: true });
-                    sessions = data || [];
-                    const cacheData = getQuestionsCache() || {};
-                    cacheData._sessions = sessions;
-                    setQuestionsCache(cacheData);
+                const { data } = await supabaseClient.from('quiz_sessions').select('*').eq('student_id', currentUser.supabaseId).order('finished_at', { ascending: true });
+                if (data && data.length > 0) {
+                    const supaSessions = data.map(s => ({
+                        ...s, date: s.finished_at || s.date,
+                        module_class: s.module_class || '', course: s.course || ''
+                    }));
+                    const localIds = new Set(sessions.map(s => s.id));
+                    const newSupa = supaSessions.filter(s => !localIds.has(s.id));
+                    sessions = [...sessions, ...newSupa];
                 }
-            } catch(e) { sessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]'); }
-        } else {
-            sessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
+            } catch(e) { console.warn('Stats Supabase merge error:', e.message); }
         }
         const moduleData = moduleModules.map(m => {
             const moduleSessions = sessions.filter(s => s.module_class === m);
@@ -6807,13 +6789,43 @@ function initAdminCharts() {
     if (window._activityChart) { window._activityChart.destroy(); window._activityChart = null; }
     setTimeout(async () => {
         await renderAdminOverview();
+        const students = await getAdminPayments();
+        const sessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
+        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const now = new Date();
+        const monthData = new Array(6).fill(0);
+        const monthLabels = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            monthLabels.push(months[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
+            const mKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            students.filter(s => s.paymentStatus === 'validated').forEach(s => {
+                if (s.paymentDate) {
+                    const parts = s.paymentDate.split('/');
+                    if (parts.length === 3) {
+                        const sKey = parts[2] + '-' + parts[1];
+                        if (sKey === mKey) monthData[5 - i] += s.paymentAmount || 0;
+                    }
+                }
+            });
+        }
         const ctx2 = document.getElementById('revenueChart');
         if (ctx2) {
-            window._revenueChart = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai'], datasets: [{ label: 'Revenus (DZD)', data: [15000, 22000, 18000, 25000, 30000], backgroundColor: 'rgba(99, 102, 241, 0.8)' }] }, options: { responsive: true } });
+            window._revenueChart = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: monthLabels, datasets: [{ label: 'Revenus (DZD)', data: monthData, backgroundColor: 'rgba(13, 148, 136, 0.8)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
         }
+        const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        const dayData = new Array(7).fill(0);
+        sessions.forEach(s => {
+            const d = new Date(s.date || s.finished_at);
+            if (!isNaN(d)) {
+                let day = d.getDay();
+                day = day === 0 ? 6 : day - 1;
+                dayData[day]++;
+            }
+        });
         const ctx3 = document.getElementById('activityChart');
         if (ctx3) {
-            window._activityChart = new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'], datasets: [{ label: 'Sessions', data: [45, 52, 38, 65, 72, 89, 56], borderColor: 'rgba(6, 182, 212, 1)', fill: true, backgroundColor: 'rgba(6, 182, 212, 0.1)' }] }, options: { responsive: true } });
+            window._activityChart = new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: dayLabels, datasets: [{ label: 'Sessions', data: dayData, borderColor: 'rgba(6, 182, 212, 1)', fill: true, backgroundColor: 'rgba(6, 182, 212, 0.1)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
         }
     }, 100);
 }
