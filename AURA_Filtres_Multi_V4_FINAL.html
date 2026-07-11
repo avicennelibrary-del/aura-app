@@ -2631,39 +2631,88 @@ async function handleLogin(e) {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
 
-    // Input validation
     if (!validateEmail(email)) { showToast('Email invalide', 'error'); return; }
     if (!password || password.length < 1) { showToast('Mot de passe requis', 'error'); return; }
 
+    // Try Supabase auth first
     if (supabaseClient && typeof supabaseClient?.from === 'function') {
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                console.warn('Supabase auth failed, falling back to demo:', error.message);
-            } else {
-            const user = data.user;
-            let { data: profile, error: profileErr } = await supabaseClient
-                .from('profiles')
-                .select('role, full_name, level, is_validated, subscription_status')
-                .eq('id', user.id)
-                .single();
-            if (profileErr && profileErr.code === 'PGRST116') {
-                const { error: insertErr } = await supabaseClient.from('profiles').insert({
-                    id: user.id, full_name: user.user_metadata?.name || user.email, email: user.email,
-                    level: user.user_metadata?.level || '3', role: 'student', subscription_status: 'trial'
-                });
-                if (insertErr) throw insertErr;
-                const { data: newProfile } = await supabaseClient
-                    .from('profiles')
-                    .select('role, full_name, level, is_validated, subscription_status')
-                    .eq('id', user.id)
-                    .single();
-                profile = newProfile;
-            } else if (profileErr) {
-                console.warn('Profile fetch error:', profileErr);
-                showToast('Erreur chargement profil: ' + profileErr.message, 'error');
+            if (!error && data && data.user) {
+                const user = data.user;
+                let { data: profile, error: profileErr } = await supabaseClient
+                    .from('profiles').select('role, full_name, level, is_validated, subscription_status')
+                    .eq('id', user.id).single();
+                if (profileErr && profileErr.code === 'PGRST116') {
+                    await supabaseClient.from('profiles').insert({
+                        id: user.id, full_name: user.user_metadata?.name || user.email, email: user.email,
+                        level: user.user_metadata?.level || '3', role: 'student', subscription_status: 'trial'
+                    });
+                    const { data: newProfile } = await supabaseClient
+                        .from('profiles').select('role, full_name, level, is_validated, subscription_status')
+                        .eq('id', user.id).single();
+                    profile = newProfile;
+                } else if (profileErr) {
+                    showToast('Erreur chargement profil', 'error');
+                    return;
+                }
+                const role = profile?.role || 'student';
+                isAdmin = role === 'admin';
+                if (!isAdmin && profile?.is_validated === false && profile?.subscription_status !== 'trial') {
+                    await supabaseClient.auth.signOut();
+                    showToast('Compte en attente de validation.', 'error');
+                    return;
+                }
+                currentUser = {
+                    id: user.id, name: profile?.full_name || user.email,
+                    email: user.email, level: profile?.level || '3',
+                    is_validated: profile?.is_validated ?? false,
+                    subscription_status: profile?.subscription_status || 'blocked'
+                };
+                document.getElementById('landing-section').classList.add('hidden');
+                document.getElementById('auth-section').classList.add('hidden');
+                if (isAdmin) {
+                    document.getElementById('dashboard-section').classList.add('hidden');
+                    document.getElementById('admin-section').classList.remove('hidden');
+                    showAdminTab('overview');
+                    showToast("Connecté en tant qu'admin", 'success');
+                    initAdminCharts();
+                } else {
+                    document.getElementById('dashboard-section').classList.remove('hidden');
+                    document.getElementById('admin-section').classList.add('hidden');
+                    showDashboard();
+                    showToast("Connecté en tant qu'étudiant", 'success');
+                }
                 return;
             }
+        } catch (e) {
+            console.warn('Supabase login error, falling back to demo:', e.message);
+        }
+    }
+
+    // Fallback: mode démo local
+    if (email === 'admin@aura.dz' && password === 'admin') {
+        quickLogin('admin');
+        return;
+    }
+    const existing = mockStudents.find(s => s.email === email);
+    if (existing) {
+        currentUser = {
+            id: existing.id, name: existing.name, email: existing.email,
+            level: existing.level, is_validated: existing.is_validated ?? false,
+            subscription_status: existing.subscription_status || (existing.is_validated ? 'full' : 'trial')
+        };
+        isAdmin = false;
+        document.getElementById('landing-section').classList.add('hidden');
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('dashboard-section').classList.remove('hidden');
+        document.getElementById('admin-section').classList.add('hidden');
+        showDashboard();
+        showToast("Connecté en mode local", 'success');
+    } else {
+        showToast('Email ou mot de passe incorrect', 'error');
+    }
+}
             const role = profile?.role || 'student';
             isAdmin = role === 'admin';
 
