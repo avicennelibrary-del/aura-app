@@ -13,7 +13,7 @@
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         /* Mobile touch improvements */
         button, a, .cursor-pointer { min-height: 44px; }
-        .option-card { min-height: 60px; cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0.1); transition: all 0.2s; }
+        .option-card { min-height: 56px; cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0.1); transition: all 0.25s; }
         .option-card:active { transform: scale(0.98); }
         /* Better touch targets */
         input, select, textarea { font-size: 16px !important; } /* Prevents zoom on iOS */
@@ -38,19 +38,6 @@
         .status-validated { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
         .timer-pulse { animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .option-card:hover { border-color: #0d9488; background: #f0fdfa; }
-        .option-card.selected { background: linear-gradient(135deg, #ccfbf1, #cffafe); border-color: #0d9488; }
-        .option-card.selected .letter-box { background: #0d9488; color: white; }
-        .option-card.selected .check-mark { background: #0d9488; border-color: #0d9488; }
-        .option-card.selected .check-mark i { opacity: 1; }
-        .option-card.correct { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-color: #22c55e; }
-        .option-card.correct .letter-box { background: #22c55e; color: white; }
-        .option-card.correct .check-mark { background: #22c55e; border-color: #22c55e; }
-        .option-card.correct .check-mark i { opacity: 1; }
-        .option-card.wrong { background: linear-gradient(135deg, #fee2e2, #fecaca); border-color: #ef4444; }
-        .option-card.wrong .letter-box { background: #ef4444; color: white; }
-        .option-card.wrong .check-mark { background: #ef4444; border-color: #ef4444; }
-        .option-card.wrong .check-mark i { opacity: 1; }
         .letter-box { flex-shrink: 0; }
         .check-mark { flex-shrink: 0; }
         .meta-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-right: 6px; }
@@ -60,6 +47,51 @@
         .meta-year { background: #fce7f3; color: #db2777; }
         .meta-course { background: #cffafe; color: #0891b2; }
         .active-sidebar { background: rgba(255,255,255,0.12) !important; color: white !important; }
+        /* QCM Page Enhancements */
+        .qcm-option { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; min-height: 56px; }
+        .qcm-option::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(13,148,136,0.05), rgba(6,182,212,0.05)); opacity: 0; transition: opacity 0.3s; }
+        .qcm-option:hover { border-color: #0d9488; background: #f0fdfa; }
+        .qcm-option:hover::before { opacity: 1; }
+        .qcm-option:active { transform: scale(0.98); }
+        .qcm-option.selected { transform: scale(1.01); box-shadow: 0 4px 20px rgba(13,148,136,0.2); border-color: #0d9488; background: linear-gradient(135deg, #ccfbf1, #cffafe); }
+        .qcm-option.selected::before { opacity: 1; }
+        .qcm-option.correct { transform: scale(1.01); box-shadow: 0 4px 20px rgba(34,197,94,0.2); border-color: #22c55e; background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+        .qcm-option.wrong { transform: scale(0.98); border-color: #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca); }
+        .qcm-option.correct::after, .qcm-option.wrong::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 0 4px 4px 0; }
+        .qcm-option.correct::after { background: #22c55e; }
+        .qcm-option.wrong::after { background: #ef4444; }
+        .qcm-option.selected .letter-box { background: #0d9488; color: white; }
+        .qcm-option.selected .check-mark { background: #0d9488; border-color: #0d9488; }
+        .qcm-option.selected .check-mark i { opacity: 1; }
+        .qcm-option.correct .letter-box { background: #22c55e; color: white; }
+        .qcm-option.correct .check-mark { background: #22c55e; border-color: #22c55e; }
+        .qcm-option.correct .check-mark i { opacity: 1; }
+        .qcm-option.wrong .letter-box { background: #ef4444; color: white; }
+        .qcm-option.wrong .check-mark { background: #ef4444; border-color: #ef4444; }
+        .qcm-option.wrong .check-mark i { opacity: 1; }
+        .qcm-verify-btn { position: relative; overflow: hidden; }
+        .qcm-verify-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s; }
+        .qcm-verify-btn:hover::before { transform: translateX(100%); }
+        .qcm-next-btn { position: relative; overflow: hidden; }
+        .qcm-next-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s; }
+        .qcm-next-btn:hover::before { transform: translateX(100%); }
+        .qcm-progress-ring { transition: stroke-dashoffset 0.5s ease; }
+        .qcm-question-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s; cursor: pointer; }
+        .qcm-question-dot.active { transform: scale(1.4); }
+        .qcm-question-dot.answered { background: #0d9488; }
+        .qcm-question-dot.current { background: #06b6d4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
+        .qcm-question-dot.unanswered { background: #cbd5e1; }
+        .qcm-key-hint { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 700; color: #94a3b8; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #e2e8f0; pointer-events: none; opacity: 0.7; }
+        .qcm-option:hover .qcm-key-hint { opacity: 1; color: #0d9488; border-color: #0d9488; }
+        @keyframes optionPulse { 0% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); } 70% { box-shadow: 0 0 0 8px rgba(13,148,136,0); } 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0); } }
+        .qcm-option.selected { animation: optionPulse 0.4s ease-out; }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .qcm-slide-in { animation: slideInUp 0.35s ease-out; }
+        @keyframes correctFlash { 0% { background-color: rgba(34,197,94,0.3); } 100% { background-color: transparent; } }
+        .qcm-correct-flash { animation: correctFlash 0.8s ease-out; }
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+        .qcm-wrong-shake { animation: wrongShake 0.4s ease-out; }
+        .qcm-sticky-actions { position: sticky; bottom: 0; z-index: 20; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 12px 0; margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; }
         .confetti-piece { position: fixed; width: 10px; height: 10px; z-index: 9999; pointer-events: none; animation: confettiFall 3s ease-out forwards; }
         #btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
         .playlist-icon-indigo { background: #dbeafe; } .playlist-icon-indigo i { color: #2563eb; }
@@ -109,6 +141,10 @@
             .hidden.md\\:flex { display: none !important; }
             .hidden.md\\:block { display: block !important; }
             .md\\:ml-72 { margin-left: 0 !important; }
+            .qcm-key-hint { display: none !important; }
+            .qcm-sticky-actions { margin: 0 -1rem !important; padding-left: 1rem !important; padding-right: 1rem !important; }
+            #question-navigator { gap: 4px !important; }
+            .qcm-question-dot { width: 8px !important; height: 8px !important; }
         }
         
         /* Dark Mode Styles */
@@ -166,6 +202,11 @@
         .dark .faq-item { background: #1e293b !important; border-color: #334155 !important; }
         .dark .faq-item .text-slate-900 { color: #f1f5f9 !important; }
         .dark .faq-item .text-slate-500 { color: #94a3b8 !important; }
+        .dark .qcm-key-hint { background: #334155 !important; color: #94a3b8 !important; border-color: #475569 !important; }
+        .dark .qcm-option:hover .qcm-key-hint { color: #06b6d4 !important; border-color: #06b6d4 !important; }
+        .dark .qcm-sticky-actions { background: rgba(30,41,59,0.95) !important; border-color: #334155 !important; }
+        .dark .qcm-question-dot.unanswered { background: #475569 !important; }
+        .dark #question-card { background: #1e293b !important; border-color: #334155 !important; }
     </style>
 
 </head>
@@ -1113,74 +1154,85 @@
 
         <!-- QCM -->
         <div id="qcm-section" class="hidden fade-in">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 mb-6 flex items-center justify-between sticky top-4 z-30">
-                    <div class="flex items-center gap-4">
-                        <button onclick="backToCourses()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition"><i class="fas fa-arrow-left"></i></button>
-                        <div><h3 class="font-bold text-slate-900" id="qcm-course-title">...</h3><p class="text-sm text-slate-400" id="qcm-module-title">...</p></div>
+            <div class="max-w-3xl mx-auto">
+                <!-- HEADER sticky : titre + timer + score live + compteur -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-4 mb-4 sticky top-4 z-30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <button onclick="backToCourses()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition flex-shrink-0"><i class="fas fa-arrow-left"></i></button>
+                            <div class="min-w-0"><h3 class="font-bold text-slate-900 truncate" id="qcm-course-title">...</h3><p class="text-xs text-slate-400 truncate" id="qcm-module-title">...</p></div>
+                        </div>
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                            <div id="live-score" class="hidden px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg"><span class="text-xs text-emerald-600 font-semibold"><i class="fas fa-check-circle mr-1"></i><span id="live-score-text">0/0</span></span></div>
+                            <div id="timer-container" class="hidden flex items-center gap-2 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200"><i class="fas fa-clock text-rose-500 timer-pulse text-sm"></i><span id="timer" class="font-mono font-bold text-rose-600">00:00</span></div>
+                            <div class="bg-slate-100 px-3 py-1.5 rounded-lg"><span id="qcm-counter" class="font-bold text-slate-700 text-sm">1/10</span></div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div id="timer-container" class="hidden flex items-center gap-2 bg-rose-50 px-4 py-2 rounded-xl border border-rose-200"><i class="fas fa-clock text-rose-500 timer-pulse"></i><span id="timer" class="font-mono font-bold text-rose-600 text-lg">00:00</span></div>
-                        <div class="bg-slate-100 px-4 py-2 rounded-xl"><span id="qcm-counter" class="font-bold text-slate-700">1/10</span></div>
+                    <!-- Barre de progression intégrée dans le header -->
+                    <div class="mt-3">
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div id="progress-bar" class="h-full rounded-full bg-gradient-to-r from-teal-600 via-cyan-500 to-cyan-400 transition-all duration-500" style="width: 0%"></div></div>
+                        <div class="flex justify-between items-center mt-1"><span id="questions-restantes" class="text-[10px] text-slate-400"></span><span id="progress-percent" class="text-[10px] text-slate-400 font-medium">0%</span></div>
                     </div>
                 </div>
 
-                <div id="question-card" class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 mb-6">
-                    <div class="mb-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="text-xs text-slate-400">Question <span id="q-number">1</span></span>
-                        </div>
-                        <!-- MÉTADONNÉES : SOURCE, ANNÉE, COURS -->
-                        <div id="question-meta" class="flex flex-wrap items-center gap-2 mb-4"></div>
-                        <h3 id="question-text" class="text-xl font-semibold text-slate-900 leading-relaxed">...</h3>
+                <!-- Question Navigator Dots -->
+                <div id="question-navigator" class="flex flex-wrap items-center justify-center gap-1.5 mb-4"></div>
+
+                <!-- QUESTION CARD -->
+                <div id="question-card" class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-4 qcm-slide-in">
+                    <!-- Métadonnées + bouton leçon -->
+                    <div class="flex items-center justify-between mb-3">
+                        <div id="question-meta" class="flex flex-wrap items-center gap-2"></div>
+                        <button onclick="openLessonForCurrentQuestion()" id="btn-lesson" class="hidden px-3 py-1.5 text-xs font-semibold text-teal-600 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition flex items-center gap-1.5 flex-shrink-0"><i class="fas fa-book-open"></i>Voir la leçon</button>
                     </div>
-                    <div id="options-container" class="space-y-3"></div>
-                    <div id="explanation-box" class="hidden mt-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl">
+                    <!-- Question -->
+                    <h3 id="question-text" class="text-lg font-semibold text-slate-900 leading-relaxed mb-5">...</h3>
+                    <!-- Options -->
+                    <div id="options-container" class="space-y-2.5"></div>
+                    <!-- Vérifier : DIRECTEMENT sous les options -->
+                    <div class="mt-4 text-center">
+                        <button onclick="verifyAnswer()" id="btn-verify" class="qcm-verify-btn px-10 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed mx-auto"><i class="fas fa-check"></i><span id="btn-verify-text">Vérifier</span></button>
+                        <span id="keyboard-hint" class="text-[10px] text-slate-400 mt-1.5 block hidden md:block">Raccourci : <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">A-E</kbd> sélectionner · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">↵</kbd> valider</span>
+                    </div>
+                    <!-- Précédent : en bas à gauche, discrètement -->
+                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-100">
+                        <button onclick="prevQuestion()" id="btn-prev" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-medium"><i class="fas fa-chevron-left text-[10px]"></i>Précédent</button>
+                        <div id="btn-next-container" class="hidden">
+                            <button onclick="nextQuestion()" id="btn-next" class="qcm-next-btn px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm">Question suivante<i class="fas fa-chevron-right text-xs"></i></button>
+                        </div>
+                    </div>
+                    <!-- Explication (cachée par défaut) -->
+                    <div id="explanation-box" class="hidden mt-4 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl qcm-slide-in">
                         <div class="flex items-start gap-3">
                             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-lightbulb text-white text-sm"></i></div>
-                            <div class="flex-1"><h4 class="font-bold text-blue-900 mb-1">Explication</h4><p id="explanation-text" class="text-blue-700 leading-relaxed"></p></div>
+                            <div class="flex-1"><h4 class="font-bold text-blue-900 mb-1 text-sm">Explication</h4><p id="explanation-text" class="text-blue-700 leading-relaxed text-sm"></p></div>
                         </div>
-                         <div id="ai-explanation-area" class="mt-4 hidden">
-                            <div class="flex items-start gap-3 p-4 bg-white/70 rounded-xl border border-teal-200">
-                                <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-sm"></i></div>
+                         <div id="ai-explanation-area" class="mt-3 hidden">
+                            <div class="flex items-start gap-3 p-3 bg-white/70 rounded-xl border border-teal-200">
+                                <div class="w-7 h-7 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-slate-800 mb-1 text-sm flex items-center gap-2"><i class="fas fa-magic text-teal-500"></i>Assistant IA</h4>
+                                    <h4 class="font-bold text-slate-800 mb-1 text-xs flex items-center gap-2"><i class="fas fa-magic text-teal-500"></i>Assistant IA</h4>
                                     <div id="ai-explanation-content" class="text-sm text-slate-600 leading-relaxed prose prose-sm max-w-none"></div>
                                 </div>
                             </div>
                         </div>
-                        <button onclick="generateAIExplanation()" id="btn-ai-explain" class="mt-3 text-sm px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:shadow-md transition flex items-center gap-2 w-fit hidden"><i class="fas fa-robot"></i>Expliquer avec l'IA</button>
-</div>
-                </div>
+                        <button onclick="generateAIExplanation()" id="btn-ai-explain" class="mt-2 text-xs px-3 py-1.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:shadow-md transition flex items-center gap-1.5 w-fit hidden"><i class="fas fa-robot"></i>Expliquer avec l'IA</button>
+                    </div>
                 </div>
 
                 <!-- Discussion -->
-                <div id="discussion-box" class="hidden mt-4">
-                    <button onclick="toggleDiscussion()" class="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-200">
+                <div id="discussion-box" class="hidden mb-4">
+                    <button onclick="toggleDiscussion()" class="w-full flex items-center justify-between p-3 bg-white hover:bg-slate-50 rounded-xl transition border border-slate-200">
                         <span class="text-sm font-semibold text-slate-700"><i class="far fa-comments mr-2"></i>Discussion <span id="discussion-count" class="text-xs text-slate-400 ml-1">(0)</span></span>
                         <i id="discussion-chevron" class="fas fa-chevron-down text-slate-400 text-xs transition"></i>
                     </button>
-                    <div id="discussion-content" class="hidden mt-3 space-y-3">
-                        <div id="discussion-messages" class="space-y-3 max-h-64 overflow-y-auto p-2"></div>
+                    <div id="discussion-content" class="hidden mt-2 space-y-3">
+                        <div id="discussion-messages" class="space-y-3 max-h-48 overflow-y-auto p-2"></div>
                         <div class="flex gap-2">
-                            <input type="text" id="discussion-input" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Poser une question ou commenter..." maxlength="500">
-                            <button onclick="postDiscussionMessage()" class="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition text-sm font-medium"><i class="fas fa-paper-plane"></i></button>
+                            <input type="text" id="discussion-input" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Poser une question ou commenter..." maxlength="500">
+                            <button onclick="postDiscussionMessage()" class="px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition text-sm font-medium"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>
-                </div>
-
-                <div class="flex justify-between items-center">
-                    <button onclick="prevQuestion()" id="btn-prev" class="px-6 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition" disabled><i class="fas fa-chevron-left mr-2"></i>Précédent</button>
-                    <div class="flex gap-3">
-                        <button onclick="verifyAnswer()" id="btn-verify" class="px-8 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2"><i class="fas fa-check"></i>Vérifier</button>
-                        <button onclick="nextQuestion()" id="btn-next" class="hidden px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2">Suivant<i class="fas fa-chevron-right"></i></button>
-                    </div>
-                </div>
-
-                <div class="mt-8 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                    <div class="flex justify-between text-sm text-slate-500 mb-3 font-medium"><span>Progression</span><span id="progress-percent">0%</span></div>
-                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div id="progress-bar" class="h-full rounded-full bg-gradient-to-r from-teal-600 via-cyan-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div></div>
-                    <div class="flex justify-between text-xs text-slate-400 mt-2"><span id="questions-restantes"></span><span></span></div>
                 </div>
             </div>
 
@@ -2056,6 +2108,16 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
         console.warn('Erreur fetch Supabase:', e.message);
         return [];
     }
+}
+
+const SOURCE_PRIORITY = { 'RESIDANAT': 0, 'EMD': 1, 'RATT': 2 };
+function sortQuestionsByPriority(questions) {
+    return questions.sort((a, b) => {
+        const pa = SOURCE_PRIORITY[a.source] ?? 99;
+        const pb = SOURCE_PRIORITY[b.source] ?? 99;
+        if (pa !== pb) return pa - pb;
+        return (b.year || 0) - (a.year || 0);
+    });
 }
 
 function expandCoursesWithParents(courses) {
@@ -3353,6 +3415,15 @@ async function renderTrainingStep() {
     }
 }
 
+function filterTrainingCards(query) {
+    const term = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('#modules-grid .training-card, #courses-grid .training-card');
+    cards.forEach(card => {
+        const search = card.getAttribute('data-search') || '';
+        card.style.display = search.includes(term) ? '' : 'none';
+    });
+}
+
 function renderTrainingModuleSelection() {
     document.getElementById('modules-section').classList.remove('hidden');
     document.getElementById('courses-section').classList.add('hidden');
@@ -3366,8 +3437,9 @@ function renderTrainingModuleSelection() {
         grid.innerHTML = '<div class="col-span-full text-center py-12"><i class="fas fa-folder-open text-4xl text-slate-300 mb-4"></i><p class="text-slate-500">Aucun module disponible pour votre niveau.</p></div>';
         return;
     }
-    grid.innerHTML = trialNote + userModules.slice(0, trialLimit).map((module, idx) => `
-        <div onclick="selectTrainingModule('${module}')" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in">
+    const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un module..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
+    grid.innerHTML = searchHtml + trialNote + userModules.slice(0, trialLimit).map((module, idx) => `
+        <div onclick="selectTrainingModule('${module}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${module.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-teal-600 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">${idx + 1}</div>
                 <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Étape 1/4</span>
@@ -3399,8 +3471,9 @@ function renderTrainingSubModuleSelection() {
     moduleTitle.textContent = `${trainingState.module} — Étape 2 : Choisissez un module`;
 
     document.getElementById('simulation-filter-panel').classList.add('hidden');
-    coursesGrid.innerHTML = moduleCourses.map((sub, idx) => `
-        <div onclick="selectTrainingSubModule('${sub}')" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in">
+    const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un sous-module..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
+    coursesGrid.innerHTML = searchHtml + moduleCourses.map((sub, idx) => `
+        <div onclick="selectTrainingSubModule('${sub}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${sub.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-folder-open"></i></div>
                 <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Étape 2/4</span>
@@ -3429,8 +3502,9 @@ async function renderTrainingCourseSelection() {
     moduleTitle.textContent = `${trainingState.module} > ${trainingState.submodule} — Étape 3 : Choisissez un cours`;
 
     document.getElementById('simulation-filter-panel').classList.add('hidden');
-    coursesGrid.innerHTML = subCourses.map((course, idx) => `
-        <div onclick="selectTrainingCourse('${course}')" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in">
+    const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un cours..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
+    coursesGrid.innerHTML = searchHtml + subCourses.map((course, idx) => `
+        <div onclick="selectTrainingCourse('${course}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${course.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-book"></i></div>
                 <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">Étape 3/4</span>
@@ -3570,6 +3644,7 @@ async function startTrainingQCM() {
             && (!trainingState.source || q.source === trainingState.source)
         );
     }
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour ces filtres.', 'error');
@@ -3798,6 +3873,7 @@ async function startSimulationResidanat() {
     } else {
         currentQuestions = mockQuestions.filter(q => q.source === 'RESIDANAT' && q.year == year);
     }
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour cette année', 'error');
@@ -4004,6 +4080,7 @@ async function startSimulationEMD() {
             && q.source === 'EMD'
         );
     }
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM EMD trouvé pour ces filtres. Importez des questions EMD dans la base.', 'error');
@@ -4114,6 +4191,29 @@ function backToModules() {
     }
 }
 
+// ==================== VOIR LA LEÇON ASSOCIÉE ====================
+function openLessonForCurrentQuestion() {
+    const q = currentQuestions[currentQuestionIndex];
+    if (!q || !q.course) return;
+    const courseName = q.course;
+    const parentModule = Object.keys(coursesData).find(m => (coursesData[m] || []).includes(courseName));
+    if (parentModule) {
+        trainingState.module = parentModule;
+        trainingState.submodule = courseName;
+        trainingState.course = courseName;
+        currentModule = courseName;
+        trainingStep = 'filters';
+        backToCourses();
+        setTimeout(() => {
+            document.getElementById('modules-section').classList.add('hidden');
+            document.getElementById('courses-section').classList.remove('hidden');
+            renderTrainingFilterSelection();
+        }, 100);
+    } else {
+        showToast(`Cours : ${courseName}`, 'info');
+    }
+}
+
 async function backToCourses() {
     clearInterval(timerInterval);
     document.getElementById('qcm-section').classList.add('hidden');
@@ -4182,6 +4282,7 @@ async function startQCM(course) {
             }
         }
     }
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM ne correspond aux filtres sélectionnés.', 'error');
         return;
@@ -4231,6 +4332,10 @@ function renderQuestion() {
     hasVerified = false;
     selectedOptions = [];
 
+    // Slide-in animation
+    const card = document.getElementById('question-card');
+    if (card) { card.classList.remove('qcm-slide-in'); void card.offsetWidth; card.classList.add('qcm-slide-in'); }
+
     // AFFICHAGE DES MÉTADONNÉES : SOURCE ET ANNÉE
     const metaContainer = document.getElementById('question-meta');
     if (!metaContainer) return console.warn('question-meta not found');
@@ -4271,9 +4376,19 @@ function renderQuestion() {
     document.getElementById('qcm-counter').textContent = `${currentQuestionIndex + 1}/${currentQuestions.length}`;
     document.getElementById('progress-percent').textContent = `${Math.round((currentQuestionIndex / currentQuestions.length) * 100)}%`;
     document.getElementById('progress-bar').style.width = `${(currentQuestionIndex / currentQuestions.length) * 100}%`;
-    document.getElementById('q-number').textContent = currentQuestionIndex + 1;
     const restantes = document.getElementById('questions-restantes');
     if (restantes) restantes.textContent = `${currentQuestions.length - currentQuestionIndex} question${currentQuestions.length - currentQuestionIndex > 1 ? 's' : ''} restante${currentQuestions.length - currentQuestionIndex > 1 ? 's' : ''}`;
+
+    // Live score
+    const liveScore = document.getElementById('live-score');
+    const liveScoreText = document.getElementById('live-score-text');
+    if (liveScore && liveScoreText && userAnswers.length > 0) {
+        const correct = userAnswers.filter(a => a.isCorrect).length;
+        liveScoreText.textContent = `${correct}/${userAnswers.length}`;
+        liveScore.classList.remove('hidden');
+    } else if (liveScore) {
+        liveScore.classList.add('hidden');
+    }
 
     document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
     if (currentMode === 'simulation') document.getElementById('btn-prev').classList.add('hidden');
@@ -4285,14 +4400,25 @@ function renderQuestion() {
 
     // Reset buttons pour nouvelle question (sauf si déjà répondue)
     const verifyBtn = document.getElementById('btn-verify');
+    const verifyText = document.getElementById('btn-verify-text');
     verifyBtn.classList.remove('hidden');
     verifyBtn.disabled = true;
     if (currentMode === 'simulation') {
-        verifyBtn.innerHTML = '<i class="fas fa-arrow-right"></i>Suivant';
+        if (verifyText) verifyText.textContent = 'Suivant';
+        verifyBtn.querySelector('i').className = 'fas fa-arrow-right';
     } else {
-        verifyBtn.innerHTML = '<i class="fas fa-check"></i>Vérifier';
+        if (verifyText) verifyText.textContent = 'Vérifier';
+        verifyBtn.querySelector('i').className = 'fas fa-check';
     }
-    document.getElementById('btn-next').classList.add('hidden');
+    document.getElementById('btn-next-container').classList.add('hidden');
+
+    // Show lesson button if course matches a known lesson
+    const lessonBtn = document.getElementById('btn-lesson');
+    if (lessonBtn) {
+        const hasLesson = q.course && coursesData[q.course];
+        lessonBtn.classList.toggle('hidden', !hasLesson);
+    }
+
     const aiBtn = document.getElementById('btn-ai-explain');
     if (aiBtn) aiBtn.classList.add('hidden');
 
@@ -4302,14 +4428,18 @@ function renderQuestion() {
     const validOptions = q.options.map((opt, idx) => ({ opt, idx })).filter(item => item.opt && item.opt.trim() !== '' && item.opt !== '-');
     const optionsDiv = document.getElementById('options-container');
     optionsDiv.innerHTML = validOptions.map((item, displayIdx) => `
-        <div onclick="toggleOption(${item.idx})" id="opt-${item.idx}" class="option-card flex items-center p-4 border-2 border-slate-200 rounded-xl bg-white">
-            <div class="letter-box w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-500 mr-4 transition-all">${String.fromCharCode(65 + displayIdx)}</div>
-            <div class="flex-grow font-medium text-slate-700">${item.opt}</div>
-            <div class="check-mark w-6 h-6 border-2 border-slate-300 rounded flex items-center justify-center transition-all">
+        <div onclick="toggleOption(${item.idx})" id="opt-${item.idx}" class="qcm-option option-card flex items-center p-4 md:p-5 border-2 border-slate-200 rounded-xl bg-white relative min-h-[56px]">
+            <div class="letter-box w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-500 mr-4 transition-all text-sm flex-shrink-0">${String.fromCharCode(65 + displayIdx)}</div>
+            <div class="flex-grow font-medium text-slate-700 text-sm md:text-base leading-snug">${item.opt}</div>
+            <div class="check-mark w-6 h-6 border-2 border-slate-300 rounded-md flex items-center justify-center transition-all flex-shrink-0 ml-3">
                 <i class="fas fa-check text-white text-xs opacity-0"></i>
             </div>
+            <span class="qcm-key-hint">${String.fromCharCode(65 + displayIdx)}</span>
         </div>
     `).join('');
+
+    // Render question navigator dots
+    renderQuestionNavigator();
 
     // Restaurer l'état si la question a déjà été répondue
     const prevAnswer = userAnswers.find(a => a.question === currentQuestionIndex);
@@ -4335,11 +4465,11 @@ function renderQuestion() {
         const expText = (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') ? q.explanation : '';
         document.getElementById('explanation-text').innerHTML = `${expText}<br><br><strong>Bonne(s) réponse(s) : ${correctLetters}</strong><br>${scoreText}`;
         document.getElementById('explanation-box').classList.remove('hidden');
-const aiBtn = document.getElementById('btn-ai-explain');
-    if (aiBtn) aiBtn.classList.remove('hidden');
-        document.getElementById('btn-verify').classList.add('hidden');
-        document.getElementById('btn-next').classList.remove('hidden');
+        const aiBtn = document.getElementById('btn-ai-explain');
+        if (aiBtn) aiBtn.classList.remove('hidden');
+        showNextButton();
     }
+    renderQuestionNavigator();
 }
 
 // FONCTION POUR BASCULER LA SÉLECTION D'UNE OPTION (MULTIPLE)
@@ -4617,8 +4747,26 @@ function verifyAnswer() {
     const aiBtn = document.getElementById('btn-ai-explain');
     if (aiBtn) aiBtn.classList.remove('hidden');
 
-    document.getElementById('btn-verify').classList.add('hidden');
-    document.getElementById('btn-next').classList.remove('hidden');
+    // Afficher "Question suivante" au lieu de cacher Vérifier
+    showNextButton();
+
+    // Auto-scroll to explanation + animate correct/wrong
+    scrollToExplanation();
+    const card = document.getElementById('question-card');
+    if (card) {
+        if (scoreResult.isCorrect) card.classList.add('qcm-correct-flash');
+        else card.classList.add('qcm-wrong-shake');
+        setTimeout(() => { card.classList.remove('qcm-correct-flash', 'qcm-wrong-shake'); }, 800);
+    }
+    renderQuestionNavigator();
+}
+
+function showNextButton() {
+    const verifyBtn = document.getElementById('btn-verify');
+    const verifyText = document.getElementById('btn-verify-text');
+    const nextContainer = document.getElementById('btn-next-container');
+    verifyBtn.classList.add('hidden');
+    nextContainer.classList.remove('hidden');
 }
 
 function nextQuestion() {
@@ -4627,6 +4775,84 @@ function nextQuestion() {
         finishSession();
     } else {
         renderQuestion();
+    }
+}
+
+// ==================== QUESTION NAVIGATOR ====================
+function renderQuestionNavigator() {
+    const nav = document.getElementById('question-navigator');
+    if (!nav || !currentQuestions.length) return;
+    const maxDots = Math.min(currentQuestions.length, 50);
+    let html = '';
+    for (let i = 0; i < maxDots; i++) {
+        const isAnswered = userAnswers.some(a => a.question === i);
+        const isCurrent = i === currentQuestionIndex;
+        let cls = 'qcm-question-dot unanswered';
+        if (isCurrent) cls = 'qcm-question-dot current';
+        else if (isAnswered) cls = 'qcm-question-dot answered';
+        html += `<div class="${cls}" onclick="jumpToQuestion(${i})" title="Question ${i + 1}"></div>`;
+    }
+    if (currentQuestions.length > 50) html += `<span class="text-xs text-slate-400">+${currentQuestions.length - 50}</span>`;
+    nav.innerHTML = html;
+}
+
+function jumpToQuestion(idx) {
+    if (idx >= 0 && idx < currentQuestions.length && idx !== currentQuestionIndex) {
+        currentQuestionIndex = idx;
+        renderQuestion();
+    }
+}
+
+// ==================== KEYBOARD SHORTCUTS ====================
+function handleQCMKeyboard(e) {
+    const section = document.getElementById('qcm-section');
+    if (!section || section.classList.contains('hidden')) return;
+    const key = e.key.toUpperCase();
+    if (!hasVerified) {
+        if (key >= 'A' && key <= 'E') {
+            const idx = key.charCodeAt(0) - 65;
+            const optEl = document.getElementById(`opt-${idx}`);
+            if (optEl) toggleOption(idx);
+        } else if (key === 'ENTER') {
+            e.preventDefault();
+            const btn = document.getElementById('btn-verify');
+            if (btn && !btn.disabled) verifyAnswer();
+        }
+    } else {
+        if (key === 'ENTER' || key === 'ARROWRIGHT' || key === 'N') {
+            e.preventDefault();
+            nextQuestion();
+        } else if (key === 'ARROWLEFT' || key === 'P') {
+            e.preventDefault();
+            prevQuestion();
+        }
+    }
+}
+document.addEventListener('keydown', handleQCMKeyboard);
+
+// ==================== SWIPE GESTURES (MOBILE) ====================
+let touchStartX = 0;
+let touchStartY = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+document.addEventListener('touchend', function(e) {
+    const section = document.getElementById('qcm-section');
+    if (!section || section.classList.contains('hidden')) return;
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    const dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 80) {
+        if (dx < 0 && hasVerified) nextQuestion();
+        else if (dx > 0) prevQuestion();
+    }
+}, { passive: true });
+
+// ==================== AUTO-SCROLL AFTER VERIFY ====================
+function scrollToExplanation() {
+    const box = document.getElementById('explanation-box');
+    if (box) {
+        setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
     }
 }
 
@@ -4929,7 +5155,7 @@ function startQuickSession(mode) { currentMode = mode; setMode(mode); showModule
 async function startRandomSession() {
     if (!isSupabaseEnabled()) {
         if (mockQuestions.length === 0) { showToast('Aucune question disponible', 'error'); return; }
-        currentQuestions = [...mockQuestions].sort(() => Math.random() - 0.5);
+        currentQuestions = sortQuestionsByPriority([...mockQuestions]);
         currentMode = 'training';
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
@@ -4945,7 +5171,7 @@ async function startRandomSession() {
         const { data, error } = await supabaseClient.from('questions').select('*');
         if (error) throw error;
         if (!data || data.length === 0) { showToast('Aucune question', 'error'); return; }
-currentQuestions = data.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) })).sort(() => Math.random() - 0.5);
+currentQuestions = sortQuestionsByPriority(data.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) })));
         currentMode = 'training';
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
@@ -5196,6 +5422,7 @@ function startPlaylistQuiz(courses) {
             if (currentQuestions.length === 0) {
                 currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
             }
+            currentQuestions = sortQuestionsByPriority(currentQuestions);
             if (currentQuestions.length === 0) {
                 showToast('Aucune question trouvée pour ces cours', 'error');
                 return;
@@ -5219,6 +5446,7 @@ function startPlaylistQuiz(courses) {
         })();
     } else {
         currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
+        currentQuestions = sortQuestionsByPriority(currentQuestions);
         if (currentQuestions.length === 0) {
             showToast('Aucune question trouvée pour ces cours', 'error');
             return;
