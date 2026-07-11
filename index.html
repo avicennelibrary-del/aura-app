@@ -5369,19 +5369,20 @@ async function getAdminStudents() {
         if (payErr) throw payErr;
         const supaStudents = (profiles || []).map(p => {
             const pay = (payments || []).find(py => py.student_id === p.id);
+            const local = localStudents.find(ls => ls.email === p.email);
             return {
-                id: p.id,
+                id: local?.id || p.id,
                 name: p.full_name,
                 email: p.email,
                 level: p.level,
-                status: pay?.status === 'validated' ? 'validated' : 'pending',
-                date: p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '-',
-                paymentAmount: pay?.amount || 0,
-                paymentStatus: pay?.status || null,
-                paymentDate: pay?.payment_date ? new Date(pay.payment_date).toLocaleDateString('fr-FR') : '-',
-                paymentReceipt: pay?.receipt_url || null,
-                is_validated: p.is_validated,
-                subscription_status: p.subscription_status || 'blocked',
+                status: pay?.status === 'validated' ? 'validated' : (local?.status || 'pending'),
+                date: p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : (local?.date || '-'),
+                paymentAmount: pay?.amount || local?.paymentAmount || 0,
+                paymentStatus: pay?.status || local?.paymentStatus || null,
+                paymentDate: pay?.payment_date ? new Date(pay.payment_date).toLocaleDateString('fr-FR') : (local?.paymentDate || '-'),
+                paymentReceipt: pay?.receipt_url || local?.paymentReceipt || null,
+                is_validated: p.is_validated ?? local?.is_validated ?? false,
+                subscription_status: p.subscription_status || local?.subscription_status || 'blocked',
                 supabaseId: p.id,
                 payId: pay?.id,
                 source: 'supabase'
