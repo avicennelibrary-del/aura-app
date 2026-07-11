@@ -1909,17 +1909,7 @@ const SUPABASE_CONFIG = {
 let supabaseClient = null;
 
 function initSupabase() {
-    if (typeof supabase !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url.includes('supabase.co') && !SUPABASE_CONFIG.url.includes('votre-projet')) {
-        try {
-            supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-            console.log('Supabase connecté');
-        } catch(e) {
-            console.warn('Supabase non disponible, mode démo');
-            supabaseClient = null;
-        }
-    } else {
-        console.log('Mode démo — configurer SUPABASE_CONFIG pour activer Supabase');
-    }
+    console.log('Mode démo — Supabase désactivé pour le mode local');
 }
 initSupabase();
 
