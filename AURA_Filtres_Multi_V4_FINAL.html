@@ -1951,7 +1951,9 @@ function normalizeOptions(val) {
 }
 
 function isSupabaseEnabled() {
-    return supabaseClient !== null && typeof supabaseClient?.from === 'function' && currentUser?.id;
+    if (!supabaseClient || typeof supabaseClient?.from !== 'function' || !currentUser?.id) return false;
+    if (String(currentUser.id) === 'admin-supabase') return false;
+    return true;
 }
 
 // ==================== BATCH OPTIMIZATION ====================
@@ -2487,6 +2489,12 @@ const mockStudents = [
     { id: 4, name: 'Yacine Bensalem', email: 'yacine@demo.dz', level: 'residanat', status: 'pending', date: '08/05/2026', paymentAmount: 3000, paymentStatus: 'pending', paymentDate: '08/05/2026', paymentReceipt: null, is_validated: false, subscription_status: 'trial' },
     { id: 5, name: 'Nadia Khelifi', email: 'nadia@demo.dz', level: 'residanat', status: 'pending', date: '07/05/2026', paymentAmount: 3000, paymentStatus: 'pending', paymentDate: '07/05/2026', paymentReceipt: null, is_validated: false, subscription_status: 'trial' }
 ];
+
+// Load mockStudents from localStorage if available (persistence across reloads)
+try {
+    const saved = localStorage.getItem('aura_mockStudents');
+    if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed) && parsed.length > 0) { mockStudents.length = 0; mockStudents.push(...parsed); } }
+} catch(e) {}
 
 let currentUser = null;
 let isAdmin = false;
