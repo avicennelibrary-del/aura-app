@@ -2839,29 +2839,15 @@ function renderStudentDashboard() {
     document.getElementById('stat-study-time').textContent = ls.timeStr;
     document.getElementById('stat-streak').textContent = ls.streak;
 
-    if (isSupabaseEnabled() && currentUser?.supabaseId) {
+    if (isSupabaseEnabled()) {
         (async () => {
             try {
-                const { data: sessions, error: err2 } = await supabaseClient
-                    .from('quiz_sessions').select('score, total_questions, duration, finished_at').eq('student_id', currentUser.supabaseId).order('finished_at', { ascending: false });
-                if (!err2 && sessions && sessions.length > 0) {
-                    const localSessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
-                    const allSessions = [...sessions.map(s => ({
-                        score: s.score, total_questions: s.total_questions, duration: s.duration,
-                        date: s.finished_at, finished_at: s.finished_at
-                    })), ...localSessions];
-                    const totalScore = allSessions.reduce((s, ses) => s + (ses.score || 0), 0);
-                    const totalQ = allSessions.reduce((s, ses) => s + (ses.total_questions || 0), 0);
-                    document.getElementById('stat-total-qcm').textContent = totalQ;
-                    document.getElementById('stat-success-rate').textContent = totalQ > 0 ? Math.round((totalScore / totalQ) * 100) + '%' : '--';
-                    const totalTime = allSessions.reduce((s, ses) => s + (ses.duration || 0), 0);
-                    const hours = Math.floor(totalTime / 3600);
-                    const minutes = Math.floor((totalTime % 3600) / 60);
-                    document.getElementById('stat-study-time').textContent = hours > 0 ? `${hours}h${minutes > 0 ? minutes : ''}` : `${minutes}m`;
-                    const dates = [...new Set(allSessions.map(s => (s.finished_at || s.date || '').split('T')[0]))].filter(Boolean);
-                    document.getElementById('stat-streak').textContent = computeStreak(dates);
+                const { count, error } = await supabaseClient
+                    .from('questions').select('*', { count: 'exact', head: true });
+                if (!error && count !== null && count > 0) {
+                    document.getElementById('stat-total-qcm').textContent = count;
                 }
-            } catch (e) { console.warn('Dashboard Supabase merge error:', e.message); }
+            } catch (e) { console.warn('Total QCM count error:', e.message); }
         })();
     }
 }
