@@ -2657,7 +2657,8 @@ async function handleLogin(e) {
                     id: user.id, name: profile?.full_name || user.email,
                     email: user.email, level: profile?.level || '3',
                     is_validated: profile?.is_validated ?? false,
-                    subscription_status: profile?.subscription_status || 'blocked'
+                    subscription_status: profile?.subscription_status || 'blocked',
+                    supabaseId: user.id
                 };
                 document.getElementById('landing-section').classList.add('hidden');
                 document.getElementById('auth-section').classList.add('hidden');
@@ -2771,7 +2772,7 @@ function handleRegisterReceiptUpload(e) {
 
 function quickLogin(type) {
     if (type === 'student') {
-        currentUser = { name: 'Ahmed Benali', email: 'ahmed@demo.dz', level: 'residanat', is_validated: true };
+        currentUser = { id: 'demo-student', name: 'Ahmed Benali', email: 'ahmed@demo.dz', level: 'residanat', is_validated: true, subscription_status: 'full' };
         isAdmin = false;
         document.getElementById('landing-section').classList.add('hidden');
         document.getElementById('auth-section').classList.add('hidden');
@@ -4644,7 +4645,7 @@ function finishSession() {
     document.getElementById('qcm-section').classList.add('hidden');
     document.getElementById('results-section').classList.remove('hidden');
 
-    if (isSupabaseEnabled() && currentUser) {
+    if (isSupabaseEnabled() && currentUser?.supabaseId) {
         saveQuizSessionToSupabase({
             mode: currentMode,
             simulationBranch: simulationBranch,
@@ -5132,7 +5133,8 @@ function renderStats() {
         }
         const courseStats = document.getElementById('course-stats');
         if (courseStats) {
-            const courseData = courseModules.map(c => {
+            const uniqueCourses = [...new Set(sessions.map(s => s.course).filter(Boolean))].sort();
+            const courseData = uniqueCourses.map(c => {
                 const s = sessions.filter(ses => ses.course === c);
                 const total = s.reduce((a, ses) => a + (ses.total_questions || 0), 0);
                 const score = s.reduce((a, ses) => a + (ses.score || 0), 0);
