@@ -2703,86 +2703,6 @@ async function handleLogin(e) {
         showToast('Email ou mot de passe incorrect', 'error');
     }
 }
-            const role = profile?.role || 'student';
-            isAdmin = role === 'admin';
-
-            if (!isAdmin && profile?.is_validated === false && profile?.subscription_status !== 'trial') {
-                await supabaseClient.auth.signOut();
-                showToast('Votre compte est en attente de validation par un administrateur.', 'error');
-                return;
-            }
-
-            currentUser = {
-                id: user.id,
-                name: profile?.full_name || user?.user_metadata?.name || 'Étudiant',
-                email: user?.email || email,
-                level: profile?.level || user?.user_metadata?.level || '3',
-                is_validated: profile?.is_validated ?? false,
-                subscription_status: profile?.subscription_status || 'blocked'
-            };
-            document.getElementById('landing-section').classList.add('hidden');
-            document.getElementById('auth-section').classList.add('hidden');
-            if (isAdmin) {
-                document.getElementById('dashboard-section').classList.add('hidden');
-                document.getElementById('admin-section').classList.remove('hidden');
-                showAdminTab('overview');
-                showToast("Connecté en tant qu'admin", 'success');
-                initAdminCharts();
-            } else {
-                document.getElementById('dashboard-section').classList.remove('hidden');
-                document.getElementById('admin-section').classList.add('hidden');
-                showDashboard();
-                showToast("Connecté en tant qu'étudiant", 'success');
-            }
-            return;
-        } catch (e) {
-            console.error('Login error:', e);
-            console.warn('Falling back to demo mode');
-        }
-        }
-    }
-
-    console.log('→ Fallback vers mode démo (Supabase non disponible)');
-    if (email === 'admin@aura.dz') {
-        if (password === 'admin') {
-            quickLogin('admin');
-            return;
-        }
-        showToast('Email ou mot de passe admin incorrect', 'error');
-        return;
-    }
-    // Chercher un étudiant existant dans mockStudents
-    const existing = mockStudents.find(s => s.email === email);
-        if (existing) {
-            currentUser = {
-                id: existing.id,
-                name: existing.name,
-                email: existing.email,
-                level: existing.level,
-                is_validated: existing.is_validated ?? false,
-                subscription_status: existing.subscription_status || (existing.is_validated ? 'full' : 'trial')
-            };
-            isAdmin = false;
-        } else {
-            // Essayer l'inscription locale si l'utilisateur n'existe pas
-            const newId = mockStudents.length ? Math.max(...mockStudents.map(s => s.id)) + 1 : 1;
-            mockStudents.push({
-                id: newId, name: email.split('@')[0], email, level: '3',
-                status: 'validated', is_validated: true, subscription_status: 'full',
-                date: new Date().toLocaleDateString('fr-FR'), paymentAmount: 2000,
-                paymentStatus: 'validated', paymentReceipt: null
-            });
-            saveStudentsToStorage();
-            currentUser = { id: newId, name: email.split('@')[0], email, level: 'residanat', is_validated: true, subscription_status: 'full' };
-            isAdmin = false;
-        }
-        document.getElementById('landing-section').classList.add('hidden');
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        document.getElementById('admin-section').classList.add('hidden');
-        showDashboard();
-        showToast("Connecté en mode local", 'success');
-    }
 
 function submitRegistrationReceipt() {
     if (!pendingRegistration || !pendingRegistration.receipt) {
@@ -6850,15 +6770,17 @@ async function saveQuestion(e) {
 }
 
 function initAdminCharts() {
+    if (window._revenueChart) { window._revenueChart.destroy(); window._revenueChart = null; }
+    if (window._activityChart) { window._activityChart.destroy(); window._activityChart = null; }
     setTimeout(async () => {
         await renderAdminOverview();
         const ctx2 = document.getElementById('revenueChart');
         if (ctx2) {
-            new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai'], datasets: [{ label: 'Revenus (DZD)', data: [15000, 22000, 18000, 25000, 30000], backgroundColor: 'rgba(99, 102, 241, 0.8)' }] }, options: { responsive: true } });
+            window._revenueChart = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai'], datasets: [{ label: 'Revenus (DZD)', data: [15000, 22000, 18000, 25000, 30000], backgroundColor: 'rgba(99, 102, 241, 0.8)' }] }, options: { responsive: true } });
         }
         const ctx3 = document.getElementById('activityChart');
         if (ctx3) {
-            new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'], datasets: [{ label: 'Sessions', data: [45, 52, 38, 65, 72, 89, 56], borderColor: 'rgba(6, 182, 212, 1)', fill: true, backgroundColor: 'rgba(6, 182, 212, 0.1)' }] }, options: { responsive: true } });
+            window._activityChart = new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'], datasets: [{ label: 'Sessions', data: [45, 52, 38, 65, 72, 89, 56], borderColor: 'rgba(6, 182, 212, 1)', fill: true, backgroundColor: 'rgba(6, 182, 212, 0.1)' }] }, options: { responsive: true } });
         }
     }, 100);
 }
