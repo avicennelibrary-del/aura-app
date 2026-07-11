@@ -1909,8 +1909,17 @@ const SUPABASE_CONFIG = {
 let supabaseClient = null;
 
 function initSupabase() {
-    console.log('Mode démo — Supabase désactivé pour le mode local');
+    if (typeof supabase !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url.includes('supabase.co')) {
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+            console.log('Supabase connecté');
+        } catch(e) {
+            console.warn('Supabase non disponible, mode démo:', e);
+            supabaseClient = null;
+        }
+    }
 }
+initSupabase();
 initSupabase();
 
 function toLetters(arr) {
@@ -1941,9 +1950,7 @@ function normalizeOptions(val) {
 }
 
 function isSupabaseEnabled() {
-    if (!supabaseClient || typeof supabaseClient?.from !== 'function' || !currentUser?.id) return false;
-    if (String(currentUser.id) === 'admin-supabase') return false;
-    return true;
+    return supabaseClient !== null && typeof supabaseClient?.from === 'function';
 }
 
 // ==================== BATCH OPTIMIZATION ====================
@@ -2558,32 +2565,45 @@ async function handleRegister(e) {
     if (!levels[level]) { showToast('Niveau invalide', 'error'); return; }
     const price = levels[level]?.price || 2000;
 
+    // ALWAYS save locally first (guaranteed persistence)
+    const newId = mockStudents.length ? Math.max(...mockStudents.map(s => s.id)) + 1 : 1;
+    const localStudent = {
+        id: newId, name, email, level,
+        status: 'pending',
+        date: new Date().toLocaleDateString('fr-FR'),
+        paymentAmount: price,
+        paymentStatus: 'pending',
+        paymentDate: new Date().toLocaleDateString('fr-FR'),
+        paymentReceipt: null,
+        is_validated: false,
+        subscription_status: 'trial'
+    };
+    mockStudents.push(localStudent);
+    saveStudentsToStorage();
+
+    // Try Supabase in parallel (non-blocking)
     if (isSupabaseEnabled()) {
-        const { data, error } = await supabaseClient.auth.signUp({ email, password }, { data: { name, level } });
-        if (error) {
-            console.warn('Supabase signup failed, falling back to demo:', error.message);
-            showToast('Inscription hors ligne - mode démo', 'info');
-            // Fallback vers mock
-        } else {
-            // Mettre à jour le profil (créé par le trigger) en mode trial
-            const { error: updErr } = await supabaseClient.from('profiles').update({
-                full_name: name, email: email, level: level, subscription_status: 'trial'
-            }).eq('id', data.user.id);
-            if (updErr) {
-                showToast('Erreur mise à jour profil: ' + updErr.message, 'error');
-                console.warn(updErr);
-                return;
+        try {
+            const { data, error } = await supabaseClient.auth.signUp({ email, password }, { data: { name, level } });
+            if (!error && data && data.user) {
+                await supabaseClient.from('profiles').update({
+                    full_name: name, email: email, level: level, subscription_status: 'trial'
+                }).eq('id', data.user.id);
+                await supabaseClient.from('payments').insert({
+                    student_id: data.user.id, amount: price, status: 'pending'
+                });
+                localStudent.supabaseId = data.user.id;
+                saveStudentsToStorage();
+                console.log('Inscription Supabase + locale réussie');
             }
-            // Créer le paiement en attente
-            const { error: payErr } = await supabaseClient.from('payments').insert({
-                student_id: data.user.id, amount: price, status: 'pending'
-            });
-            if (payErr) {
-                showToast('Erreur création paiement: ' + payErr.message, 'error');
-                console.warn(payErr);
-            }
-            pendingRegistration = { id: data.user.id, name, email, level, amount: price, receipt: null, source: 'supabase' };
-            showReceiptModal();
+        } catch (e) {
+            console.warn('Supabase signup error (saved locally):', e.message);
+        }
+    }
+
+    pendingRegistration = { id: newId, name, email, level, amount: price, receipt: null, source: 'local' };
+    showReceiptModal();
+    showToast('Inscription réussie !', 'success');
             showToast('Inscription réussie ! Accès à 2 modules gratuits en version d\'essai.', 'success');
             return;
         }
