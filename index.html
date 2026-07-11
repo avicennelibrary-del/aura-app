@@ -5842,24 +5842,23 @@ async function handleReceiptUpload(e) {
         showToast('Veuillez sélectionner une image', 'error');
         return;
     }
+    const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
     const reader = new FileReader();
     reader.onload = async function(ev) {
         const dataUrl = ev.target.result;
-        if (isSupabaseEnabled()) {
+        if (local) {
+            local.paymentReceipt = dataUrl;
+            saveStudentsToStorage();
+        }
+        if (isSupabaseEnabled() && local && local.supabaseId) {
             try {
-                const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('receipts').upload(`receipt_${receiptStudentId}_${Date.now()}.png`, dataUrl, { contentType: 'image/png' });
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('receipts').upload(`receipt_${local.supabaseId}_${Date.now()}.png`, dataUrl, { contentType: 'image/png' });
                 if (uploadError) throw uploadError;
                 const { data: publicUrl } = supabaseClient.storage.from('receipts').getPublicUrl(uploadData.path);
-                await supabaseClient.from('payments').update({ receipt_url: publicUrl.publicUrl }).eq('student_id', receiptStudentId);
+                await supabaseClient.from('payments').update({ receipt_url: publicUrl.publicUrl }).eq('student_id', local.supabaseId);
             } catch (e) {
-                console.warn('Upload Supabase failed, saving locally:', e);
-                await supabaseClient.from('payments').update({ receipt_url: dataUrl }).eq('student_id', receiptStudentId);
+                console.warn('Upload Supabase failed:', e);
             }
-        } else {
-            const s = mockStudents.find(st => st.id === receiptStudentId);
-            if (!s) return;
-            s.paymentReceipt = dataUrl;
-            saveStudentsToStorage();
         }
         document.getElementById('receipt-no-image').classList.add('hidden');
         document.getElementById('receipt-has-image').classList.remove('hidden');
