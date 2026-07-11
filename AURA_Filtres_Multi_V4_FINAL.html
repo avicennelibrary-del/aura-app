@@ -2794,14 +2794,14 @@ function submitRegistrationReceipt() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi en cours...';
 
     setTimeout(() => {
-        if (pendingRegistration.source === 'demo') {
-            const student = mockStudents.find(s => s.id === pendingRegistration.id);
-            if (student) student.paymentReceipt = pendingRegistration.receipt;
+        const student = mockStudents.find(s => String(s.id) === String(pendingRegistration.id));
+        if (student) {
+            student.paymentReceipt = pendingRegistration.receipt;
             saveStudentsToStorage();
-        } else if (isSupabaseEnabled()) {
-            // Mettre à jour le reçu via le dernier paiement
+        }
+        if (isSupabaseEnabled() && student && student.supabaseId) {
             supabaseClient.from('payments')
-                .select('id').eq('student_id', pendingRegistration.id)
+                .select('id').eq('student_id', student.supabaseId)
                 .order('id', { ascending: false }).limit(1)
                 .then(({ data: pays, error: selErr }) => {
                     if (selErr) { console.warn('Select payment error:', selErr); return; }
@@ -5440,13 +5440,14 @@ function savePlaylist(e) {
 
 // Helpers pour charger des données unifiées (Supabase ou mock)
 async function getAdminStudents() {
-    if (!isSupabaseEnabled()) return mockStudents;
+    const localStudents = [...mockStudents];
+    if (!isSupabaseEnabled()) return localStudents;
     try {
         const { data: profiles, error: pErr } = await supabaseClient.from('profiles').select('*').eq('role', 'student');
         if (pErr) throw pErr;
         const { data: payments, error: payErr } = await supabaseClient.from('payments').select('*');
         if (payErr) throw payErr;
-        return (profiles || []).map(p => {
+        const supaStudents = (profiles || []).map(p => {
             const pay = (payments || []).find(py => py.student_id === p.id);
             return {
                 id: p.id,
@@ -5462,12 +5463,16 @@ async function getAdminStudents() {
                 is_validated: p.is_validated,
                 subscription_status: p.subscription_status || 'blocked',
                 supabaseId: p.id,
-                payId: pay?.id
+                payId: pay?.id,
+                source: 'supabase'
             };
         });
+        const supaEmails = supaStudents.map(s => s.email);
+        const localOnly = localStudents.filter(s => !supaEmails.includes(s.email));
+        return [...supaStudents, ...localOnly];
     } catch (e) {
-        console.warn('getAdminStudents error:', e);
-        return mockStudents;
+        console.warn('getAdminStudents Supabase error, using local only:', e.message);
+        return localStudents;
     }
 }
 
@@ -5630,15 +5635,22 @@ function updateTrashBadge() {
 }
 
 async function validatePayment(btn, studentId) {
-    if (isSupabaseEnabled()) {
-        const payId = btn.getAttribute('data-pay-id');
-        if (payId) {
-            await supabaseClient.from('payments').update({ status: 'validated', validated_at: new Date().toISOString() }).eq('id', payId);
-            await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', studentId);
-        }
-    } else {
-        const s = mockStudents.find(st => st.id === studentId);
-        if (s) { s.paymentStatus = 'validated'; saveStudentsToStorage(); }
+    const s = mockStudents.find(st => String(st.id) === String(studentId));
+    if (s) {
+        s.paymentStatus = 'validated';
+        s.status = 'validated';
+        s.is_validated = true;
+        s.subscription_status = 'full';
+        saveStudentsToStorage();
+    }
+    if (isSupabaseEnabled() && s && s.supabaseId) {
+        try {
+            const payId = btn.getAttribute('data-pay-id');
+            if (payId) {
+                await supabaseClient.from('payments').update({ status: 'validated', validated_at: new Date().toISOString() }).eq('id', payId);
+            }
+            await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', s.supabaseId);
+        } catch (e) { console.warn('Supabase validation error:', e.message); }
     }
     const statusEl = btn.closest('tr').querySelector('.status-pending, .status-validated');
     if (statusEl) {
@@ -5650,14 +5662,15 @@ async function validatePayment(btn, studentId) {
 }
 
 async function rejectPayment(btn, studentId) {
-    if (isSupabaseEnabled()) {
-        const payId = btn.getAttribute('data-pay-id');
-        if (payId) {
-            await supabaseClient.from('payments').update({ status: 'rejected' }).eq('id', payId);
-        }
-    } else {
-        const s = mockStudents.find(st => st.id === studentId);
-        if (s) { s.paymentStatus = 'pending'; saveStudentsToStorage(); }
+    const s = mockStudents.find(st => String(st.id) === String(studentId));
+    if (s) { s.paymentStatus = 'pending'; s.status = 'pending'; saveStudentsToStorage(); }
+    if (isSupabaseEnabled() && s && s.supabaseId) {
+        try {
+            const payId = btn.getAttribute('data-pay-id');
+            if (payId) {
+                await supabaseClient.from('payments').update({ status: 'rejected' }).eq('id', payId);
+            }
+        } catch (e) { console.warn('Supabase reject error:', e.message); }
     }
     btn.closest('tr').remove();
     await Promise.all([renderAdminReceipts(), renderAdminOverview()]);
@@ -5695,13 +5708,8 @@ async function renderAdminReceipts() {
 
 async function openReceiptModal(studentId) {
     receiptStudentId = studentId;
-    let s;
-    if (isSupabaseEnabled()) {
-        const students = await getAdminPayments();
-        s = students.find(st => st.id === studentId);
-    } else {
-        s = mockStudents.find(st => st.id === Number(studentId));
-    }
+    const students = await getAdminPayments();
+    const s = students.find(st => String(st.id) === String(studentId));
     if (!s) return;
     const levelName = levels[s.level]?.name || s.level;
     document.getElementById('receipt-student-avatar').textContent = s.name.charAt(0);
@@ -5734,25 +5742,27 @@ function closeReceiptModal() {
 
 async function validateReceiptPayment() {
     if (!receiptStudentId) return;
-    if (isSupabaseEnabled()) {
-        const students = await getAdminPayments();
-        const s = students.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        await supabaseClient.from('payments').update({ status: 'validated', validated_at: new Date().toISOString() }).eq('student_id', s.id);
-        await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', s.id);
-        supabaseClient.functions.invoke('send-validation-email', {
-            body: { studentEmail: s.email, studentName: s.name, amount: s.paymentAmount }
-        }).then(({ error }) => { if (error) console.warn('Edge Function email:', error); });
-        sendValidationEmail(s);
-    } else {
-        const s = mockStudents.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        s.paymentStatus = 'validated';
-        s.status = 'validated';
-        s.is_validated = true;
+    const students = await getAdminPayments();
+    const s = students.find(st => String(st.id) === String(receiptStudentId));
+    if (!s) return;
+    const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
+    if (local) {
+        local.paymentStatus = 'validated';
+        local.status = 'validated';
+        local.is_validated = true;
+        local.subscription_status = 'full';
         saveStudentsToStorage();
-        sendValidationEmail(s);
     }
+    if (isSupabaseEnabled() && s.supabaseId) {
+        try {
+            await supabaseClient.from('payments').update({ status: 'validated', validated_at: new Date().toISOString() }).eq('student_id', s.supabaseId);
+            await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', s.supabaseId);
+            supabaseClient.functions.invoke('send-validation-email', {
+                body: { studentEmail: s.email, studentName: s.name, amount: s.paymentAmount }
+            }).then(({ error }) => { if (error) console.warn('Edge Function email:', error); });
+        } catch (e) { console.warn('Supabase validation error:', e.message); }
+    }
+    sendValidationEmail(s);
     const statusLabel = document.getElementById('receipt-status-label');
     statusLabel.innerHTML = '<span class="status-validated px-2 py-1 rounded-full text-xs font-semibold inline-block">Validé</span>';
     await Promise.all([renderAdminReceipts(), renderAdminPayments(), renderAdminOverview()]);
@@ -5784,16 +5794,16 @@ function sendValidationEmail(student) {
 
 async function rejectReceiptPayment() {
     if (!receiptStudentId) return;
-    if (isSupabaseEnabled()) {
-        const students = await getAdminPayments();
-        const s = students.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        await supabaseClient.from('payments').update({ status: 'rejected' }).eq('student_id', s.id);
-    } else {
-        const s = mockStudents.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        s.paymentStatus = 'pending';
+    const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
+    if (local) {
+        local.paymentStatus = 'pending';
+        local.status = 'pending';
         saveStudentsToStorage();
+    }
+    if (isSupabaseEnabled() && local && local.supabaseId) {
+        try {
+            await supabaseClient.from('payments').update({ status: 'rejected' }).eq('student_id', local.supabaseId);
+        } catch (e) { console.warn('Supabase reject error:', e.message); }
     }
     const statusLabel = document.getElementById('receipt-status-label');
     statusLabel.innerHTML = '<span class="status-pending px-2 py-1 rounded-full text-xs font-semibold inline-block">En attente</span>';
@@ -5803,16 +5813,15 @@ async function rejectReceiptPayment() {
 
 async function removeReceiptImage() {
     if (!receiptStudentId) return;
-    if (isSupabaseEnabled()) {
-        const students = await getAdminPayments();
-        const s = students.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        await supabaseClient.from('payments').update({ receipt_url: null }).eq('student_id', s.id);
-    } else {
-        const s = mockStudents.find(st => st.id === receiptStudentId);
-        if (!s) return;
-        s.paymentReceipt = null;
+    const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
+    if (local) {
+        local.paymentReceipt = null;
         saveStudentsToStorage();
+    }
+    if (isSupabaseEnabled() && local && local.supabaseId) {
+        try {
+            await supabaseClient.from('payments').update({ receipt_url: null }).eq('student_id', local.supabaseId);
+        } catch (e) { console.warn('Supabase remove receipt error:', e.message); }
     }
     document.getElementById('receipt-no-image').classList.remove('hidden');
     document.getElementById('receipt-has-image').classList.add('hidden');
@@ -5961,9 +5970,6 @@ async function renderAdminStudents() {
 }
 
 async function validateStudentAccess(studentId) {
-    if (isSupabaseEnabled()) {
-        await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', studentId);
-    }
     const s = mockStudents.find(st => String(st.id) === String(studentId));
     if (s) {
         s.is_validated = true;
@@ -5971,6 +5977,11 @@ async function validateStudentAccess(studentId) {
         s.status = 'validated';
         s.paymentStatus = 'validated';
         saveStudentsToStorage();
+    }
+    if (isSupabaseEnabled() && s && s.supabaseId) {
+        try {
+            await supabaseClient.from('profiles').update({ is_validated: true, subscription_status: 'full' }).eq('id', s.supabaseId);
+        } catch (e) { console.warn('Supabase validation error:', e.message); }
     }
     await renderAdminStudents();
     showToast(`Accès activé pour ${s?.name || 'l\'étudiant'}`, 'success');
