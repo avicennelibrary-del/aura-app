@@ -2604,26 +2604,6 @@ async function handleRegister(e) {
     pendingRegistration = { id: newId, name, email, level, amount: price, receipt: null, source: 'local' };
     showReceiptModal();
     showToast('Inscription réussie !', 'success');
-            showToast('Inscription réussie ! Accès à 2 modules gratuits en version d\'essai.', 'success');
-            return;
-        }
-    }
-    // Mode démo (ou fallback si Supabase échoue)
-    const newId = mockStudents.length ? Math.max(...mockStudents.map(s => s.id)) + 1 : 1;
-    mockStudents.push({
-        id: newId,
-        name, email, level,
-        status: 'pending',
-        date: new Date().toLocaleDateString('fr-FR'),
-        paymentAmount: price,
-        paymentStatus: 'pending',
-        paymentDate: new Date().toLocaleDateString('fr-FR'),
-        paymentReceipt: null,
-        is_validated: false
-    });
-    saveStudentsToStorage();
-    pendingRegistration = { id: newId, name, email, level, amount: price, receipt: null, source: 'demo' };
-    showReceiptModal();
 }
 
 function showReceiptModal() {
