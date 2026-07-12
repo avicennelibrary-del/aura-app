@@ -2175,7 +2175,12 @@ function normalizeCourseName(s) {
 }
 
 async function fetchSupabaseQuestions({ courses, years, source } = {}) {
-    if (!isSupabaseEnabled()) return [];
+    const mockFiltered = () => {
+        if (!courses || !courses.length) return mockQuestions;
+        return mockQuestions.filter(q => courses.some(c => normalizeCourseName(q.course) === normalizeCourseName(c)));
+    };
+
+    if (!isSupabaseEnabled()) return mockFiltered();
     
     const cacheKey = JSON.stringify({ courses, years, source });
     const cached = getQuestionsCache();
@@ -2185,10 +2190,6 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
         let query = supabaseClient.from('questions').select('*');
         if (years && years.length) query = query.in('year', years.map(Number));
         if (source) query = query.eq('source', source);
-        if (courses && courses.length) {
-            const supaNames = getSupabaseCourseNames(courses);
-            query = query.in('course', supaNames);
-        }
         query = query.order('id');
         let allData = [];
         const pageSize = 1000;
@@ -2202,13 +2203,21 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
             from += pageSize;
             if (data.length < pageSize) hasMore = false;
         }
-        const result = allData.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
-        setQuestionsCache({ _key: cacheKey, _data: result });
-        return result;
+        let filtered = allData;
+        if (courses && courses.length) {
+            const normalizedCourses = courses.map(c => normalizeCourseName(c));
+            filtered = allData.filter(q => normalizedCourses.includes(normalizeCourseName(q.course)));
+        }
+        if (filtered.length > 0) {
+            const result = filtered.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
+            setQuestionsCache({ _key: cacheKey, _data: result });
+            return result;
+        }
+        console.warn('Supabase: 0 questions trouvées pour', courses, '→ fallback mock');
     } catch (e) {
-        console.warn('Erreur fetch Supabase:', e.message);
-        return [];
+        console.warn('Supabase error, fallback mock:', e.message);
     }
+    return mockFiltered();
 }
 
 const SOURCE_PRIORITY = { 'RESIDANAT': 0, 'EMD': 1, 'RATT': 2 };
