@@ -495,7 +495,7 @@
                         <span class="text-white font-extrabold text-xl">1</span>
                     </div>
                     <h3 class="font-bold text-slate-900 mb-2">Inscrivez-vous</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed">Créez votre compte en 30 secondes. Accès immédiat à 2 modules gratuits.</p>
+                        <p class="text-slate-500 text-sm leading-relaxed">Créez votre compte en 30 secondes. Accès immédiat à 2 cours gratuits.</p>
                 </div>
                 <div class="text-center group">
                     <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200 group-hover:shadow-blue-300 transition-all group-hover:scale-110 group-hover:-translate-y-1">
@@ -624,7 +624,7 @@
                 <button onclick="quickLogin('student')" class="inline-flex items-center gap-2.5 bg-gradient-to-r from-teal-500 to-cyan-400 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-teal-500/20 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105">
                     <i class="fas fa-rocket"></i> Essayer gratuitement
                 </button>
-                <p class="text-sm text-slate-400 mt-3">2 modules gratuits &middot; Aucun paiement requis</p>
+                        <p class="text-sm text-slate-400 mt-3">2 cours gratuits &middot; Aucun paiement requis</p>
             </div>
 
             <div class="max-w-md mx-auto">
@@ -695,7 +695,7 @@
                         <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform duration-300"></i>
                     </button>
                     <div class="faq-answer hidden px-6 pb-6">
-                        <p class="text-slate-500 text-sm leading-relaxed">L'essai gratuit vous donne accès à 2 modules complets sans aucune limitation. Vous pouvez tester tous les modes d'entraînement, les flashcards IA et les statistiques. Aucune carte bancaire n'est requise.</p>
+                        <p class="text-slate-500 text-sm leading-relaxed">L'essai gratuit vous donne accès à 2 cours (Biophysique & Pharmacologie) sans aucune limitation. Vous pouvez tester tous les modes d'entraînement, les flashcards IA et les statistiques. Aucune carte bancaire n'est requise.</p>
                     </div>
                 </div>
                 <div class="faq-item bg-slate-50 rounded-2xl border border-slate-100 hover:border-teal-200 transition-all">
@@ -2417,6 +2417,10 @@ const levels = {
     residanat: { name: "Résidanat", price: 3000, modules: ["Module Biologique", "Module Fondamental", "Module Pharmaceutique"] }
 };
 
+const TRIAL_FREE_COURSES = ['Biophysique', 'Pharmacologie'];
+function isTrialFreeCourse(course) { return currentUser?.subscription_status === 'trial' && TRIAL_FREE_COURSES.includes(course); }
+function isTrialLockedCourse(course) { return currentUser?.subscription_status === 'trial' && !TRIAL_FREE_COURSES.includes(course); }
+
 const coursesData = {
     "Module Biologique": ["Biochimie clinique", "Hémobiologie", "Microbiologie", "Parasitologie"],
     "Module Pharmaceutique": ["Toxicologie", "Pharmacologie", "Pharmacie clinique", "Galénique", "Analytique", "Pharmacognosie"],
@@ -3525,14 +3529,14 @@ function renderTrainingModuleSelection() {
 
     const grid = document.getElementById('modules-grid');
     const userModules = levels[currentUser?.level || '3']?.modules || [];
-    const trialLimit = currentUser?.subscription_status === 'trial' ? 2 : userModules.length;
-    const trialNote = currentUser?.subscription_status === 'trial' ? '<div class="col-span-full text-sm text-amber-600 bg-amber-50 rounded-lg p-3 mb-2"><i class="fas fa-gift mr-2"></i>Version d\'essai : 2 modules gratuits sur 5</div>' : '';
+    const isTrial = currentUser?.subscription_status === 'trial';
+    const trialNote = isTrial ? '<div class="col-span-full text-sm text-amber-600 bg-amber-50 rounded-lg p-3 mb-2"><i class="fas fa-gift mr-2"></i>Version d\'essai : <strong>Biophysique</strong> & <strong>Pharmacologie</strong> gratuits</div>' : '';
     if (userModules.length === 0) {
         grid.innerHTML = '<div class="col-span-full text-center py-12"><i class="fas fa-folder-open text-4xl text-slate-300 mb-4"></i><p class="text-slate-500">Aucun module disponible pour votre niveau.</p></div>';
         return;
     }
     const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un module..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
-    grid.innerHTML = searchHtml + trialNote + userModules.slice(0, trialLimit).map((module, idx) => `
+    grid.innerHTML = searchHtml + trialNote + userModules.map((module, idx) => `
         <div onclick="selectTrainingModule('${module}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${module.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-teal-600 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">${idx + 1}</div>
@@ -3597,7 +3601,31 @@ async function renderTrainingCourseSelection() {
 
     document.getElementById('simulation-filter-panel').classList.add('hidden');
     const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un cours..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
-    coursesGrid.innerHTML = searchHtml + subCourses.map((course, idx) => `
+    const isTrial = currentUser?.subscription_status === 'trial';
+    coursesGrid.innerHTML = searchHtml + subCourses.map((course, idx) => {
+        const locked = isTrial && !TRIAL_FREE_COURSES.includes(course);
+        if (locked) {
+            return `
+                <div class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden opacity-60 cursor-not-allowed fade-in" data-search="${course.toLowerCase()}">
+                    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center z-10">
+                        <div class="text-center">
+                            <i class="fas fa-lock text-2xl text-slate-400 mb-2"></i>
+                            <p class="text-xs text-slate-500 font-medium">Passer à la version complète</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-500 rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-book"></i></div>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold">Verrouillé</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">${course}</h3>
+                    <p class="text-sm text-slate-600 mb-4">Cours du module ${trainingState.submodule}</p>
+                    <div class="flex items-center justify-between text-sm text-slate-500">
+                        <span><i class="fas fa-question-circle mr-1"></i>Commencer les QCM</span>
+                        <span><i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>`;
+        }
+        return `
         <div onclick="selectTrainingCourse('${course}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${course.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-book"></i></div>
@@ -3609,8 +3637,8 @@ async function renderTrainingCourseSelection() {
                 <span><i class="fas fa-question-circle mr-1"></i>Commencer les QCM</span>
                 <span><i class="fas fa-arrow-right"></i></span>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 async function selectTrainingCourse(course) {
@@ -3843,9 +3871,9 @@ function renderSimulationEMDModuleSelection() {
 
     const coursesGrid = document.getElementById('courses-grid');
     const userModules = levels[currentUser?.level || '3']?.modules || [];
-    const trialLimit = currentUser?.subscription_status === 'trial' ? 2 : userModules.length;
-    const trialNote = currentUser?.subscription_status === 'trial' ? '<div class="col-span-full text-sm text-amber-600 bg-amber-50 rounded-lg p-3 mb-2"><i class="fas fa-gift mr-2"></i>Version d\'essai : 2 modules gratuits sur 5</div>' : '';
-    coursesGrid.innerHTML = trialNote + userModules.slice(0, trialLimit).map((module, idx) => `
+    const isTrial = currentUser?.subscription_status === 'trial';
+    const trialNote = isTrial ? '<div class="col-span-full text-sm text-amber-600 bg-amber-50 rounded-lg p-3 mb-2"><i class="fas fa-gift mr-2"></i>Version d\'essai : <strong>Biophysique</strong> & <strong>Pharmacologie</strong> gratuits</div>' : '';
+    coursesGrid.innerHTML = trialNote + userModules.map((module, idx) => `
         <div onclick="selectEMDModule('${module}')" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">${idx + 1}</div>
@@ -3995,6 +4023,9 @@ async function renderSimulationEMDFilters() {
     coursesGrid.innerHTML = '';
 
     let moduleCourses = coursesData[currentModule] || [];
+    if (currentUser?.subscription_status === 'trial') {
+        moduleCourses = moduleCourses.filter(c => TRIAL_FREE_COURSES.includes(c));
+    }
     console.log('Module courses from coursesData:', moduleCourses);
     
     if (moduleCourses.length === 0) {
