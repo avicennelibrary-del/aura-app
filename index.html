@@ -2185,6 +2185,10 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
         let query = supabaseClient.from('questions').select('*');
         if (years && years.length) query = query.in('year', years.map(Number));
         if (source) query = query.eq('source', source);
+        if (courses && courses.length) {
+            const supaNames = getSupabaseCourseNames(courses);
+            query = query.in('course', supaNames);
+        }
         query = query.order('id');
         let allData = [];
         const pageSize = 1000;
@@ -2197,13 +2201,6 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
             allData = allData.concat(data);
             from += pageSize;
             if (data.length < pageSize) hasMore = false;
-        }
-        if (courses && courses.length) {
-            const normalizedCourses = getSupabaseCourseNames(courses);
-            allData = allData.filter(q => {
-                const qc = normalizeCourseName(q.course);
-                return normalizedCourses.some(nc => normalizeCourseName(nc) === qc || qc.includes(normalizeCourseName(nc)) || normalizeCourseName(nc).includes(qc));
-            });
         }
         const result = allData.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
         setQuestionsCache({ _key: cacheKey, _data: result });
