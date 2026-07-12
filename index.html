@@ -2199,8 +2199,11 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
             if (data.length < pageSize) hasMore = false;
         }
         if (courses && courses.length) {
-            const normalizedCourses = courses.map(normalizeCourseName);
-            allData = allData.filter(q => normalizedCourses.includes(normalizeCourseName(q.course)));
+            const normalizedCourses = getSupabaseCourseNames(courses);
+            allData = allData.filter(q => {
+                const qc = normalizeCourseName(q.course);
+                return normalizedCourses.some(nc => normalizeCourseName(nc) === qc || qc.includes(normalizeCourseName(nc)) || normalizeCourseName(nc).includes(qc));
+            });
         }
         const result = allData.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
         setQuestionsCache({ _key: cacheKey, _data: result });
@@ -2427,6 +2430,35 @@ const levels = {
 const TRIAL_FREE_COURSES = ['Biophysique', 'Pharmacologie'];
 function isTrialFreeCourse(course) { return currentUser?.subscription_status === 'trial' && TRIAL_FREE_COURSES.includes(course); }
 function isTrialLockedCourse(course) { return currentUser?.subscription_status === 'trial' && !TRIAL_FREE_COURSES.includes(course); }
+
+const SUPABASE_COURSE_ALIASES = {
+    'Chlamydia': 'Chlamydia',
+    'Les infections hospitalières': 'Les infections hospitalieres',
+    'Pneumopathie / Méningite / IST (Herpes virus)': 'Herpes virus',
+    'Méningite, bactériémie, Infections cutanées (Les staphylocoques)': 'Staphylocoques',
+    'Méningite, bactériémie (Les streptocoques)': 'Streptocoques',
+    'Méningite, IST (Les neisseria)': 'Neisseria',
+    'Méningite, pneumonie (Haemophilus)': 'Haemophilus',
+    'Méningite néonatale, septicémie (Listeria)': 'Listeria',
+    'Infection urinaire, septicémie (Les entérobactéries)': 'Enterobacteries',
+    'Diagnostic des infections sexuellement transmissibles': 'IST Diagnostic',
+    'IST (Tréponèmes)': 'Treponemes',
+    'Hépatites / IST (Virus agents d\'hépatites)': 'Hepatites',
+    'VIH / IST (Rétrovirus)': 'Retrovirus',
+    'Vaccins bactériens et Sérothérapie': 'Vaccins bacteriens',
+    'Salmonella (Infection entérique)': 'Salmonella',
+    'Shigella (Infection entérique)': 'Shigella',
+    'Tuberculose pulmonaire, méningite (Bacille tuberculeux)': 'Tuberculose',
+    'Tuberculose atypique (Mycobactéries atypiques)': 'Tuberculose atypique',
+    'Diagnostic d\'une méningite': 'Diagnostic meningite',
+    'Diagnostic d\'une bactériémie': 'Diagnostic bacteriemie',
+    'Diagnostic d\'une infection urinaire': 'Diagnostic infection urinaire',
+    'Pseudomonas et acinetobacter (Infection urinaire, septicémie)': 'Pseudomonas'
+};
+
+function getSupabaseCourseNames(courses) {
+    return courses.map(c => SUPABASE_COURSE_ALIASES[c] || normalizeCourseName(c));
+}
 
 const coursesData = {
     "Module Biologique": ["Biochimie clinique", "Hémobiologie", "Microbiologie", "Parasitologie"],
