@@ -1807,6 +1807,7 @@
                     </div>
                     <div class="flex items-end gap-2">
                         <button onclick="openAddCourseModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"><i class="fas fa-plus mr-1"></i>Ajouter cours</button>
+                        <button onclick="openRenameCourseModal()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition"><i class="fas fa-pen mr-1"></i>Renommer cours</button>
                         <button onclick="resetQuestionFilters()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm hover:bg-slate-50">Réinitialiser</button>
                     </div>
                 </div>
@@ -1863,9 +1864,31 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Admin Reports (Signalements) -->
+            <!-- Modal Renommer Cours -->
+            <div id="rename-course-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in shadow-2xl">
+                    <h3 class="text-xl font-bold text-slate-900 mb-6"><i class="fas fa-pen text-amber-500 mr-2"></i>Renommer un cours</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Cours actuel</label>
+                            <select id="rename-course-old" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none transition">
+                                <option value="">Sélectionner un cours...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Nouveau nom</label>
+                            <input type="text" id="rename-course-new" placeholder="Nouveau nom du cours" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none transition">
+                        </div>
+                        <p class="text-xs text-slate-400">Cela renommera le cours dans TOUTES les questions de la base Supabase.</p>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="closeRenameCourseModal()" class="flex-1 border-2 border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition">Annuler</button>
+                        <button onclick="renameCourse()" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transition"><i class="fas fa-save mr-2"></i>Renommer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="admin-reports" class="hidden fade-in">
             <div class="mb-6 flex items-center justify-between">
                 <div>
@@ -6684,6 +6707,40 @@ function openAddCourseModal() {
 
 function closeAddCourseModal() {
     document.getElementById('add-course-modal').classList.add('hidden');
+}
+
+function openRenameCourseModal() {
+    const select = document.getElementById('rename-course-old');
+    const allCourses = [...new Set(allReviewQuestions.map(q => q.course).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">Sélectionner un cours...</option>' + allCourses.map(c => `<option value="${c.replace(/"/g, '&quot;')}">${c}</option>`).join('');
+    document.getElementById('rename-course-new').value = '';
+    document.getElementById('rename-course-modal').classList.remove('hidden');
+}
+
+function closeRenameCourseModal() {
+    document.getElementById('rename-course-modal').classList.add('hidden');
+}
+
+async function renameCourse() {
+    const oldName = document.getElementById('rename-course-old').value;
+    const newName = document.getElementById('rename-course-new').value.trim();
+    if (!oldName) { showToast('Sélectionnez un cours', 'error'); return; }
+    if (!newName) { showToast('Entrez le nouveau nom', 'error'); return; }
+    if (oldName === newName) { showToast('Le nom est identique', 'error'); return; }
+    if (!isSupabaseEnabled()) { showToast('Supabase non connecté', 'error'); return; }
+
+    if (!confirm(`Renommer "${oldName}" → "${newName}" dans toutes les questions ?`)) return;
+
+    try {
+        const { data, error } = await supabaseClient.from('questions').update({ course: newName }).eq('course', oldName);
+        if (error) throw error;
+        showToast(`"${oldName}" renommé en "${newName}"`, 'success');
+        invalidateAdminCache();
+        closeRenameCourseModal();
+        filterQuestionsReview();
+    } catch (e) {
+        showToast('Erreur: ' + e.message, 'error');
+    }
 }
 
 async function saveNewCourse() {
