@@ -5873,11 +5873,19 @@ function backToApp() {
     document.getElementById('dashboard-section').classList.remove('hidden');
 }
 
-function loadAdminReports() {
-    const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+async function loadAdminReports() {
     const list = document.getElementById('admin-reports-list');
     const badge = document.getElementById('admin-reports-badge');
     const countEl = document.getElementById('reports-total-count');
+
+    let reports = [];
+    if (isSupabaseEnabled()) {
+        const { data, error } = await supabaseClient.from('reports').select('*').order('created_at', { ascending: false });
+        if (error) { console.error('Load reports error:', error); }
+        reports = data || [];
+    } else {
+        reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+    }
 
     if (reports.length === 0) {
         badge.classList.add('hidden');
@@ -5890,8 +5898,8 @@ function loadAdminReports() {
     badge.textContent = reports.length;
     countEl.textContent = reports.length;
 
-    list.innerHTML = reports.slice().reverse().map((r, i) => {
-        const date = new Date(r.date);
+    list.innerHTML = reports.map((r, i) => {
+        const date = new Date(r.created_at || r.date);
         const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         const qText = (r.question || '').substring(0, 200);
         return `
@@ -5910,50 +5918,62 @@ function loadAdminReports() {
                     </div>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
-                    <button onclick="editReportedQuestion(${reports.length - 1 - i})" class="p-2 text-slate-400 hover:text-teal-500 hover:bg-teal-50 rounded-lg transition" title="Corriger"><i class="fas fa-pen text-sm"></i></button>
-                    <button onclick="deleteReport(${reports.length - 1 - i})" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Supprimer"><i class="fas fa-trash text-sm"></i></button>
+                    <button onclick="editReportedQuestion('${r.id || i}')" class="p-2 text-slate-400 hover:text-teal-500 hover:bg-teal-50 rounded-lg transition" title="Corriger"><i class="fas fa-pen text-sm"></i></button>
+                    <button onclick="deleteReport('${r.id || i}')" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Supprimer"><i class="fas fa-trash text-sm"></i></button>
                 </div>
             </div>
         </div>`;
     }).join('');
 }
 
-function deleteReport(index) {
-    const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
-    if (index < 0 || index >= reports.length) return;
-    reports.splice(index, 1);
-    localStorage.setItem('aura_question_reports', JSON.stringify(reports));
+async function deleteReport(id) {
+    if (isSupabaseEnabled()) {
+        await supabaseClient.from('reports').delete().eq('id', id);
+    } else {
+        const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+        const idx = reports.findIndex((r, i) => String(i) === String(id) || r.id === id);
+        if (idx >= 0) { reports.splice(idx, 1); localStorage.setItem('aura_question_reports', JSON.stringify(reports)); }
+    }
     loadAdminReports();
     showToast('Signalement supprimé', 'success');
 }
 
-function editReportedQuestion(index) {
-    const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
-    const report = reports[index];
-    if (!report || !report.questionId) {
+async function editReportedQuestion(id) {
+    let report = null;
+    if (isSupabaseEnabled()) {
+        const { data } = await supabaseClient.from('reports').select('*').eq('id', id).single();
+        report = data;
+    } else {
+        const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+        report = reports[parseInt(id)];
+    }
+    if (!report || !report.question_id) {
         showToast('Signalement invalide', 'error');
         return;
     }
-    editQuestionById(report.questionId);
+    editQuestionById(report.question_id);
 }
 
-function clearAllReports() {
+async function clearAllReports() {
     if (!confirm('Supprimer tous les signalements ?')) return;
-    localStorage.removeItem('aura_question_reports');
+    if (isSupabaseEnabled()) {
+        await supabaseClient.from('reports').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    } else {
+        localStorage.removeItem('aura_question_reports');
+    }
     loadAdminReports();
     showToast('Tous les signalements supprimés', 'success');
 }
 
-function updateReportsBadge() {
-    const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+async function updateReportsBadge() {
     const badge = document.getElementById('admin-reports-badge');
-    if (badge) {
-        if (reports.length > 0) {
-            badge.classList.remove('hidden');
-            badge.textContent = reports.length;
-        } else {
-            badge.classList.add('hidden');
-        }
+    if (!badge) return;
+    if (isSupabaseEnabled()) {
+        const { count } = await supabaseClient.from('reports').select('*', { count: 'exact', head: true });
+        if (count > 0) { badge.classList.remove('hidden'); badge.textContent = count; } else { badge.classList.add('hidden'); }
+    } else {
+        const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
+        if (reports.length > 0) { badge.classList.remove('hidden'); badge.textContent = reports.length; } else { badge.classList.add('hidden'); }
     }
 }
 
@@ -6227,10 +6247,16 @@ async function renderAdminOverview() {
     document.getElementById('admin-validated-count').textContent = validated;
     document.getElementById('admin-revenue').textContent = revenue.toLocaleString();
 
-    const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
-    document.getElementById('admin-reports-count').textContent = reports.length;
+    let reportCount = 0;
+    if (isSupabaseEnabled()) {
+        const { count } = await supabaseClient.from('reports').select('*', { count: 'exact', head: true });
+        reportCount = count || 0;
+    } else {
+        reportCount = JSON.parse(localStorage.getItem('aura_question_reports') || '[]').length;
+    }
+    document.getElementById('admin-reports-count').textContent = reportCount;
     const rBadge = document.getElementById('admin-reports-badge');
-    if (rBadge) { if (reports.length > 0) { rBadge.classList.remove('hidden'); rBadge.textContent = reports.length; } else { rBadge.classList.add('hidden'); } }
+    if (rBadge) { if (reportCount > 0) { rBadge.classList.remove('hidden'); rBadge.textContent = reportCount; } else { rBadge.classList.add('hidden'); } }
     
     updateTrashBadge();
 
@@ -7445,30 +7471,30 @@ function toggleQuestionActions() {
     if (dropdown) dropdown.classList.toggle('hidden');
 }
 
-function reportQuestion() {
+async function reportQuestion() {
     const q = currentQuestions[currentQuestionIndex];
     if (!q) return;
     toggleQuestionActions();
     const reason = prompt('Raison du signalement :');
     if (!reason) return;
     
-    const report = {
-        questionId: q.id,
-        question: q.q,
-        course: q.course,
-        reason: reason,
-        date: new Date().toISOString(),
-        student: currentUser?.name || 'Anonyme'
-    };
-    
-    try {
+    if (isSupabaseEnabled()) {
+        const { error } = await supabaseClient.from('reports').insert([{
+            question_id: String(q.id),
+            question: q.q,
+            course: q.course,
+            source: q.source,
+            year: q.year,
+            reason: reason,
+            student: currentUser?.name || 'Anonyme'
+        }]);
+        if (error) console.error('Report insert error:', error);
+    } else {
         const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
-        reports.push(report);
+        reports.push({ questionId: q.id, question: q.q, course: q.course, reason, date: new Date().toISOString(), student: currentUser?.name || 'Anonyme' });
         localStorage.setItem('aura_question_reports', JSON.stringify(reports));
-        updateReportsBadge();
-        updateTrashBadge();
-    } catch(e) {}
-    
+    }
+    updateReportsBadge();
     showToast('Question signalée, merci !', 'success');
 }
 
