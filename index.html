@@ -2194,7 +2194,7 @@ function startSyncTimer() {
 // ==================== REQUÊTES SUPABASE ====================
 
 function normalizeCourseName(s) {
-    return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[''`]/g, "'").replace(/\s+/g, ' ').trim();
 }
 
 async function fetchSupabaseQuestions({ courses, years, source } = {}) {
