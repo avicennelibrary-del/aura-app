@@ -6651,6 +6651,7 @@ function filterQuestionsReview() {
                     </div>
                 </div>
                 <div class="flex gap-1">
+                    <button onclick="addQuestionInCourse('${escAttr(q.course || '')}')" class="text-violet-600 hover:text-violet-800 p-2" title="Ajouter une question dans ce cours"><i class="fas fa-plus-circle"></i></button>
                     <button data-copy-id="${q.id}" class="copy-btn text-emerald-600 hover:text-emerald-800 p-2" title="Copier"><i class="fas fa-copy"></i></button>
                     <button data-edit-id="${q.id}" class="edit-btn text-blue-600 hover:text-blue-800 p-2" title="Modifier"><i class="fas fa-edit"></i></button>
                     <button data-delete-id="${q.id}" class="delete-btn text-red-600 hover:text-red-800 p-2" title="Supprimer"><i class="fas fa-trash"></i></button>
@@ -6955,6 +6956,10 @@ function resetQuestionFilters() {
     document.getElementById('review-course-filter').value = '';
     document.getElementById('review-module-filter').value = '';
     onModuleFilterChange();
+}
+
+function addQuestionInCourse(courseName) {
+    openQuestionFormAdmin({ course: courseName });
 }
 
 async function copyQuestion(id) {
