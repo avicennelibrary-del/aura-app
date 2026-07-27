@@ -7483,16 +7483,20 @@ async function reportQuestion() {
     if (!reason) return;
     
     if (isSupabaseEnabled()) {
-        const { error } = await supabaseClient.from('reports').insert([{
+        const { data, error } = await supabaseClient.from('reports').insert([{
             question_id: String(q.id),
             question: q.q,
-            course: q.course,
-            source: q.source,
-            year: q.year,
+            course: q.course || '',
+            source: q.source || '',
+            year: q.year || 0,
             reason: reason,
             student: currentUser?.name || 'Anonyme'
-        }]);
-        if (error) console.error('Report insert error:', error);
+        }]).select();
+        if (error) {
+            console.error('Report insert error:', error);
+            showToast('Erreur signalement: ' + error.message, 'error');
+            return;
+        }
     } else {
         const reports = JSON.parse(localStorage.getItem('aura_question_reports') || '[]');
         reports.push({ questionId: q.id, question: q.q, course: q.course, reason, date: new Date().toISOString(), student: currentUser?.name || 'Anonyme' });
