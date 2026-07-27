@@ -1754,7 +1754,10 @@
                     <h2 class="text-2xl font-bold text-slate-800">Gestion des Questions</h2>
                     <p class="text-slate-600"> Consultez, validez et corrigez les QCM</p>
                 </div>
-                <button onclick="openQuestionFormAdmin()" class="px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-lg hover:opacity-90"><i class="fas fa-plus mr-2"></i>Nouvelle Question</button>
+                <div class="flex gap-2">
+                    <button onclick="openQuestionFormAdmin()" class="px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-lg hover:opacity-90"><i class="fas fa-plus mr-2"></i>Nouvelle Question</button>
+                    <button onclick="addQuestionFromFilter()" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition" title="Ajouter avec cours/module du filtre"><i class="fas fa-plus-circle mr-2"></i>Ajouter au filtre</button>
+                </div>
             </div>
             <!-- Filtres rapides -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
@@ -6651,7 +6654,6 @@ function filterQuestionsReview() {
                     </div>
                 </div>
                 <div class="flex gap-1">
-                    <button onclick="addQuestionInCourse('${escAttr(q.course || '')}')" class="text-violet-600 hover:text-violet-800 p-2" title="Ajouter une question dans ce cours"><i class="fas fa-plus-circle"></i></button>
                     <button data-copy-id="${q.id}" class="copy-btn text-emerald-600 hover:text-emerald-800 p-2" title="Copier"><i class="fas fa-copy"></i></button>
                     <button data-edit-id="${q.id}" class="edit-btn text-blue-600 hover:text-blue-800 p-2" title="Modifier"><i class="fas fa-edit"></i></button>
                     <button data-delete-id="${q.id}" class="delete-btn text-red-600 hover:text-red-800 p-2" title="Supprimer"><i class="fas fa-trash"></i></button>
@@ -6960,6 +6962,12 @@ function resetQuestionFilters() {
 
 function addQuestionInCourse(courseName) {
     openQuestionFormAdmin({ course: courseName });
+}
+
+function addQuestionFromFilter() {
+    const moduleFilter = document.getElementById('review-module-filter').value;
+    const courseFilter = document.getElementById('review-course-filter').value;
+    openQuestionFormAdmin({ module: moduleFilter || null, course: courseFilter || null });
 }
 
 async function copyQuestion(id) {
