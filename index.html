@@ -2041,7 +2041,7 @@ function sanitizeHTML(str) {
 
 function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
-    return input.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+    return input.replace(/[<>"]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
 function validateEmail(email) {
