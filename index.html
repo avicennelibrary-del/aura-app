@@ -5469,23 +5469,39 @@ async function generateFlashcardAI(q) {
     const validOptForAI = q.options.map((opt, idx) => ({ opt, idx })).filter(item => item.opt && item.opt.trim() !== '' && item.opt !== '-');
     const optionsText = validOptForAI.map((item, displayIdx) => `${String.fromCharCode(65 + displayIdx)}. ${item.opt}`).join('\n');
     try {
-        const resp = await fetch(cfg.endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
-            body: JSON.stringify({
-                model: cfg.model,
-                messages: [
-                    { role: 'system', content: 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.' },
-                    { role: 'user', content: `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.` }
-                ],
-                temperature: 0.7, max_tokens: 400
-            })
-        });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        const aiText = data.choices?.[0]?.message?.content || '';
+        let aiText = '';
+        if (isSupabaseEnabled()) {
+            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
+                body: {
+                    model: cfg.model,
+                    messages: [
+                        { role: 'system', content: 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.' },
+                        { role: 'user', content: `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.` }
+                    ],
+                    temperature: 0.7, max_tokens: 400
+                }
+            });
+            if (error) throw error;
+            aiText = data?.choices?.[0]?.message?.content || '';
+        } else {
+            const resp = await fetch(cfg.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
+                body: JSON.stringify({
+                    model: cfg.model,
+                    messages: [
+                        { role: 'system', content: 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.' },
+                        { role: 'user', content: `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.` }
+                    ],
+                    temperature: 0.7, max_tokens: 400
+                })
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            aiText = data.choices?.[0]?.message?.content || '';
+        }
         if (aiText) {
-            document.getElementById('flashcard-explanation').innerHTML += `<div class="mt-4 pt-4 border-t border-slate-200"><p class="font-semibold text-teal-700 mb-2"><i class="fas fa-robot mr-1"></i>Explication IA :</p><p class="text-slate-600">${aiText.replace(/\n/g, '<br>')}</p></div>`;
+            document.getElementById('flashcard-explanation').innerHTML += `<div class="mt-4 pt-4 border-t border-slate-200"><p class="font-semibold text-teal-700 mb-2"><i class="fas fa-robot mr-1"></i>Explication IA :</p><p class="text-slate-600">${escapeHtml(aiText).replace(/\n/g, '<br>')}</p></div>`;
         }
     } catch(e) {
         document.getElementById('flashcard-explanation').innerHTML += `<div class="mt-3 text-rose-500 text-xs"><i class="fas fa-exclamation-triangle mr-1"></i>IA non disponible</div>`;
@@ -7353,7 +7369,7 @@ function closeMobileMenu() {
 const AI_DEFAULTS = {
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     model: 'llama-3.3-70b-versatile',
-    apiKey: (() => { const p1='Z3NrX0Z1a203Y3drbDlCeHFIYmc'; const p2='xc3RvV0dkeWIzRll2V0MwRENn'; const p3='RHJ6UXNpR1lPMzZROXQydDc='; return atob(p1+p2+p3); })()
+    apiKey: ''
 };
 
 function getAIConfig() {
@@ -7558,6 +7574,17 @@ async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie 
     const cfg = getAIConfig();
     if (!cfg || !cfg.apiKey) return null;
     try {
+        if (isSupabaseEnabled()) {
+            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
+                body: {
+                    model: cfg.model,
+                    messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }],
+                    temperature: 0.7, max_tokens: 1024
+                }
+            });
+            if (error) throw error;
+            return data?.choices?.[0]?.message?.content || null;
+        }
         const response = await fetch(cfg.endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
