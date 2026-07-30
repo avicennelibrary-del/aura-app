@@ -2094,7 +2094,6 @@ function initSupabase() {
     }
 }
 initSupabase();
-initSupabase();
 
 function toLetters(arr) {
     if (!arr || !arr.length) return '';
@@ -2265,6 +2264,14 @@ function sortQuestionsByPriority(questions) {
         if (pa !== pb) return pa - pb;
         return (b.year || 0) - (a.year || 0);
     });
+}
+
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 function expandCoursesWithParents(courses) {
@@ -2462,11 +2469,11 @@ function selectPlan(level) { showToast(`Niveau ${level} sélectionné`, 'info');
 
 // ==================== DONNÉES ====================
 const levels = {
-    1: { name: "1ère Année Pharmacie", price: 0, modules: [] },
-    2: { name: "2ème Année Pharmacie", price: 0, modules: [] },
-    3: { name: "3ème Année Pharmacie", price: 0, modules: [] },
-    4: { name: "4ème Année Pharmacie", price: 0, modules: [] },
-    5: { name: "5ème Année Pharmacie", price: 0, modules: [] },
+    1: { name: "1ère Année Pharmacie", price: 0, modules: ["Module Fondamental"] },
+    2: { name: "2ème Année Pharmacie", price: 0, modules: ["Module Biologique", "Module Fondamental"] },
+    3: { name: "3ème Année Pharmacie", price: 0, modules: ["Module Biologique", "Module Fondamental", "Module Pharmaceutique"] },
+    4: { name: "4ème Année Pharmacie", price: 0, modules: ["Module Biologique", "Module Fondamental", "Module Pharmaceutique"] },
+    5: { name: "5ème Année Pharmacie", price: 0, modules: ["Module Biologique", "Module Fondamental", "Module Pharmaceutique"] },
     residanat: { name: "Résidanat", price: 3000, modules: ["Module Biologique", "Module Fondamental", "Module Pharmaceutique"] }
 };
 
@@ -2983,8 +2990,23 @@ function submitRegistrationReceipt() {
     }, 1200);
 }
 
+function compressImage(dataUrl, maxWidth = 800, quality = 0.6) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = dataUrl;
+    });
+}
+
 // Event listeners pour l'upload du reçu d'inscription
-function handleRegisterReceiptUpload(e) {
+async function handleRegisterReceiptUpload(e) {
     const file = e.target.files[0];
     if (!file || !pendingRegistration) return;
     if (!file.type.startsWith('image/')) {
@@ -2992,8 +3014,8 @@ function handleRegisterReceiptUpload(e) {
         return;
     }
     const reader = new FileReader();
-    reader.onload = function(ev) {
-        const dataUrl = ev.target.result;
+    reader.onload = async function(ev) {
+        const dataUrl = await compressImage(ev.target.result);
         pendingRegistration.receipt = dataUrl;
         document.getElementById('register-receipt-no-image').classList.add('hidden');
         document.getElementById('register-receipt-has-image').classList.remove('hidden');
@@ -3834,7 +3856,7 @@ async function startTrainingQCM() {
             && (!trainingState.source || q.source === trainingState.source)
         );
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour ces filtres.', 'error');
@@ -4063,7 +4085,7 @@ async function startSimulationResidanat() {
     } else {
         currentQuestions = mockQuestions.filter(q => q.source === 'RESIDANAT' && q.year == year);
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour cette année', 'error');
@@ -4273,7 +4295,7 @@ async function startSimulationEMD() {
             && q.source === 'EMD'
         );
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM EMD trouvé pour ces filtres. Importez des questions EMD dans la base.', 'error');
@@ -4475,7 +4497,7 @@ async function startQCM(course) {
             }
         }
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM ne correspond aux filtres sélectionnés.', 'error');
         return;
@@ -5349,6 +5371,7 @@ async function startRandomSession() {
     if (!isSupabaseEnabled()) {
         if (mockQuestions.length === 0) { showToast('Aucune question disponible', 'error'); return; }
         currentQuestions = sortQuestionsByPriority([...mockQuestions]);
+        shuffleArray(currentQuestions);
         currentMode = 'training';
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
@@ -5365,6 +5388,7 @@ async function startRandomSession() {
         if (error) throw error;
         if (!data || data.length === 0) { showToast('Aucune question', 'error'); return; }
 currentQuestions = sortQuestionsByPriority(data.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) })));
+        shuffleArray(currentQuestions);
         currentMode = 'training';
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
@@ -5631,7 +5655,7 @@ function startPlaylistQuiz(courses) {
             if (currentQuestions.length === 0) {
                 currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
             }
-            currentQuestions = sortQuestionsByPriority(currentQuestions);
+            currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
             if (currentQuestions.length === 0) {
                 showToast('Aucune question trouvée pour ces cours', 'error');
                 return;
@@ -5655,7 +5679,7 @@ function startPlaylistQuiz(courses) {
         })();
     } else {
         currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
-        currentQuestions = sortQuestionsByPriority(currentQuestions);
+        currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
         if (currentQuestions.length === 0) {
             showToast('Aucune question trouvée pour ces cours', 'error');
             return;
@@ -5832,28 +5856,6 @@ async function getAdminStudents() {
 async function getAdminPayments() {
     const students = await getAdminStudents();
     return students.filter(s => s.paymentStatus);
-}
-
-async function getAdminQuestions() {
-    if (!isSupabaseEnabled()) return mockQuestions;
-    try {
-        let allData = [];
-        const pageSize = 1000;
-        let from = 0;
-        let hasMore = true;
-        while (hasMore) {
-            const { data, error } = await supabaseClient.from('questions').select('*').order('id').range(from, from + pageSize - 1);
-            if (error) throw error;
-            if (!data || data.length === 0) { hasMore = false; break; }
-            allData = allData.concat(data);
-            from += pageSize;
-            if (data.length < pageSize) hasMore = false;
-        }
-        return allData;
-    } catch (e) {
-        console.warn('getAdminQuestions error:', e);
-        return mockQuestions;
-    }
 }
 
 function showAdminTab(tab, btn) {
@@ -6225,7 +6227,7 @@ async function handleReceiptUpload(e) {
     const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
     const reader = new FileReader();
     reader.onload = async function(ev) {
-        const dataUrl = ev.target.result;
+        const dataUrl = await compressImage(ev.target.result);
         if (local) {
             local.paymentReceipt = dataUrl;
             saveStudentsToStorage();
@@ -6370,39 +6372,6 @@ async function validateStudentAccess(studentId) {
     }
     await renderAdminStudents();
     showToast(`Accès activé pour ${s?.name || 'l\'étudiant'}`, 'success');
-}
-
-async function deleteQuestion(questionId) {
-    if (!isAdmin) {
-        showToast('Seuls les administrateurs peuvent supprimer des questions.', 'error');
-        return;
-    }
-    if (!confirm('Voulez-vous vraiment supprimer cette question ?')) return;
-    
-    // Try to delete from mockQuestions first
-    const idx = mockQuestions.findIndex(q => q.id === questionId);
-    if (idx !== -1) {
-        mockQuestions.splice(idx, 1);
-        showToast('Question supprimée !', 'success');
-        invalidateAdminCache();
-        await renderAdminQuestions();
-        return;
-    }
-    
-    // If not found, check if it's in Supabase and delete there
-    if (isSupabaseEnabled()) {
-        try {
-            const { error } = await supabaseClient.from('questions').delete().eq('id', questionId);
-            if (error) throw error;
-            showToast('Question supprimée !', 'success');
-            invalidateAdminCache();
-            await renderAdminQuestions();
-        } catch (e) {
-            showToast('Erreur suppression: ' + e.message, 'error');
-        }
-    } else {
-        showToast('Question non trouvée', 'error');
-    }
 }
 
 let allReviewQuestions = [];
@@ -6888,29 +6857,6 @@ async function bulkChangeCourse() {
     allReviewQuestions.forEach(q => { if (selectedIds.includes(String(q.id))) q.course = newCourse; });
 
     showToast(`${success} question(s) mise(s) à jour. ${errors > 0 ? errors + ' erreur(s).' : ''}`, errors > 0 ? 'error' : 'success');
-    document.getElementById('select-all-questions').checked = false;
-    invalidateAdminCache();
-    filterQuestionsReview();
-}
-
-async function bulkDeleteQuestions() {
-    const selectedIds = [...document.querySelectorAll('.question-select:checked')].map(cb => cb.dataset.id);
-    if (selectedIds.length === 0) { showToast('Sélectionnez au moins une question', 'error'); return; }
-    if (!confirm(`⚠️ Supprimer définitivement ${selectedIds.length} question(s) ? Cette action est irréversible.`)) return;
-    if (!isSupabaseEnabled()) { showToast('Base non configurée', 'error'); return; }
-
-    let success = 0;
-    let errors = 0;
-    const batchSize = 500;
-    for (let i = 0; i < selectedIds.length; i += batchSize) {
-        const batch = selectedIds.slice(i, i + batchSize);
-        const { error } = await supabaseClient.from('questions').delete().in('id', batch);
-        if (error) { errors += batch.length; console.warn('Bulk delete error:', error); }
-        else success += batch.length;
-    }
-
-    allReviewQuestions = allReviewQuestions.filter(q => !selectedIds.includes(String(q.id)));
-    showToast(`${success} question(s) supprimée(s).${errors > 0 ? ' ' + errors + ' erreur(s).' : ''}`, errors > 0 ? 'error' : 'success');
     document.getElementById('select-all-questions').checked = false;
     invalidateAdminCache();
     filterQuestionsReview();
