@@ -2206,6 +2206,11 @@ function escAttr(s) {
     return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 async function fetchSupabaseQuestions({ courses, years, source } = {}) {
     const mockFiltered = () => {
         if (!courses || !courses.length) return mockQuestions;
@@ -2338,7 +2343,7 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${escapeHtml(message)}`;
     container.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
@@ -2918,11 +2923,7 @@ async function handleLogin(e) {
         }
     }
 
-    // Fallback: mode démo local
-    if (email === 'admin@aura.dz' && password === 'admin') {
-        quickLogin('admin');
-        return;
-    }
+    // Fallback: mode démo local (students only)
     const existing = mockStudents.find(s => s.email === email);
     if (existing) {
         currentUser = {
@@ -3017,16 +3018,6 @@ function quickLogin(type) {
         document.getElementById('admin-section').classList.add('hidden');
         showDashboard();
         showToast("Connecté en tant qu'étudiant", 'success');
-    } else {
-        currentUser = { name: 'Administrateur', email: 'admin@aura.dz', level: 'residanat', id: 'admin-supabase' };
-        isAdmin = true;
-        document.getElementById('landing-section').classList.add('hidden');
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.add('hidden');
-        document.getElementById('admin-section').classList.remove('hidden');
-        showAdminTab('overview');
-        showToast("Connecté en tant qu'admin", 'success');
-        initAdminCharts();
     }
 }
 
@@ -4777,11 +4768,11 @@ function updateDiscussionUI(msgs) {
                 <div class="w-7 h-7 rounded-full ${m.role === 'teacher' ? 'bg-amber-500' : 'bg-blue-600'} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">${(m.author || 'A').charAt(0)}</div>
                 <div class="flex-1 bg-slate-50 rounded-xl px-3 py-2">
                     <div class="flex items-center gap-2 mb-0.5">
-                        <span class="text-xs font-semibold text-slate-700">${m.author || 'Anonyme'}</span>
+                        <span class="text-xs font-semibold text-slate-700">${escapeHtml(m.author || 'Anonyme')}</span>
                         ${m.role === 'teacher' ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Professeur</span>' : ''}
-                        <span class="text-[10px] text-slate-400 ml-auto">${m.time || ''}</span>
+                        <span class="text-[10px] text-slate-400 ml-auto">${escapeHtml(m.time || '')}</span>
                     </div>
-                    <p class="text-sm text-slate-600">${m.text}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(m.text)}</p>
                 </div>
             </div>
         `).join('');
@@ -4812,7 +4803,7 @@ function postDiscussionMessage() {
     msgs.push({
         id: Date.now(),
         author: currentUser?.name || 'Anonyme',
-        role: currentUser?.email === 'admin@aura.dz' || isAdmin ? 'teacher' : 'student',
+        role: isAdmin ? 'teacher' : 'student',
         text: text,
         time: timeStr,
         date: now.toISOString()
@@ -6059,7 +6050,7 @@ async function renderAdminReceipts() {
         const statusText = s.paymentStatus === 'validated' ? 'Validé' : 'En attente';
         const hasReceipt = s.paymentReceipt ? true : false;
         return `<tr class="hover:bg-slate-50">
-            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${s.name}</p><p class="text-xs text-slate-500">${s.email}</p></div></div></td>
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${escapeHtml(s.name)}</p><p class="text-xs text-slate-500">${escapeHtml(s.email)}</p></div></div></td>
             <td class="px-6 py-4 text-sm">${levelName}</td>
             <td class="px-6 py-4 text-sm font-semibold">${s.paymentAmount} DZD</td>
             <td class="px-6 py-4 text-sm text-slate-500">${s.paymentDate || '-'}</td>
@@ -6282,7 +6273,7 @@ async function renderAdminOverview() {
         const statusText = s.paymentStatus === 'validated' ? 'Validé' : 'En attente';
         const color = colors[i % colors.length];
         return `<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full ${color} text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${s.name}</p><p class="text-xs text-slate-500">${levelName} • ${s.date || '-'}</p></div></div>
+            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full ${color} text-white flex items-center justify-center text-xs font-bold">${escapeHtml(s.name.charAt(0))}</div><div><p class="font-medium text-sm">${escapeHtml(s.name)}</p><p class="text-xs text-slate-500">${levelName} • ${s.date || '-'}</p></div></div>
             <span class="${statusClass} px-2 py-1 rounded-full text-xs font-semibold">${statusText}</span>
         </div>`;
     }).join('');
@@ -6313,7 +6304,7 @@ async function renderAdminPayments() {
         const statusText = s.paymentStatus === 'validated' ? 'Validé' : 'En attente';
         const supabasePayId = isSupabaseEnabled() ? ` data-pay-id="${s.payId || ''}"` : '';
         return `<tr class="hover:bg-slate-50">
-            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${s.name}</p><p class="text-xs text-slate-500">${s.email}</p></div></div></td>
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${escapeHtml(s.name)}</p><p class="text-xs text-slate-500">${escapeHtml(s.email)}</p></div></div></td>
             <td class="px-6 py-4 text-sm">${levelName}</td>
             <td class="px-6 py-4 text-sm font-semibold">${s.paymentAmount} DZD</td>
             <td class="px-6 py-4 text-sm text-slate-500">${s.paymentDate || '-'}</td>
@@ -6335,8 +6326,8 @@ async function renderAdminStudents() {
         const statusClass = sub === 'full' ? 'status-validated' : sub === 'trial' ? 'status-pending' : 'status-pending';
         const statusText = sub === 'full' ? 'Abonné' : sub === 'trial' ? 'Essai' : 'Bloqué';
         return `<tr class="hover:bg-slate-50">
-            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${s.name}</p><p class="text-xs text-slate-500">${s.email}</p></div></div></td>
-            <td class="px-6 py-4 text-sm">${s.email}</td>
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">${s.name.charAt(0)}</div><div><p class="font-medium text-sm">${escapeHtml(s.name)}</p><p class="text-xs text-slate-500">${escapeHtml(s.email)}</p></div></div></td>
+            <td class="px-6 py-4 text-sm">${escapeHtml(s.email)}</td>
             <td class="px-6 py-4 text-sm">${levelName}</td>
             <td class="px-6 py-4"><span class="${statusClass} px-2 py-1 rounded-full text-xs font-semibold">${statusText}</span></td>
             <td class="px-6 py-4 text-sm text-slate-500">${s.date}</td>
