@@ -238,9 +238,36 @@
 
             /* Nav mobile */
             nav .px-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+            /* Admin mobile */
+            #admin-section aside { transform: translateX(-100%); transition: transform 0.3s ease; }
+            #admin-section aside.open { transform: translateX(0); }
+            #admin-section main { padding: 0.75rem !important; padding-bottom: 5rem !important; }
+            #admin-section .grid.lg\\:grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; }
+            #admin-section .grid.lg\\:grid-cols-2 { grid-template-columns: 1fr !important; }
+            #admin-section table { font-size: 0.8rem !important; }
+            #admin-section table th { padding: 0.5rem 0.4rem !important; font-size: 0.7rem !important; white-space: nowrap; }
+            #admin-section table td { padding: 0.5rem 0.4rem !important; }
+            #admin-section h1 { font-size: 1.25rem !important; }
+            #admin-section h2 { font-size: 1.1rem !important; }
+            .admin-mobile-header { display: flex !important; }
+            .admin-desktop-header { display: none !important; }
         }
         
         /* Dark Mode Styles */
+        .admin-mobile-header { display: none; }
+        @media (min-width: 769px) { .admin-mobile-header { display: none !important; } }
+
+        .admin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45; }
+        .admin-overlay.open { display: block; }
+
+        @media (min-width: 769px) {
+            #admin-section aside { transform: none !important; }
+            #admin-section main { margin-left: 18rem !important; padding-bottom: 0 !important; }
+            .admin-mobile-header { display: none !important; }
+            .admin-overlay { display: none !important; }
+        }
+
         .dark { color-scheme: dark; }
         .dark body { background: #0f172a; color: #e2e8f0; }
         .dark .bg-white { background: #1e293b !important; }
@@ -1641,7 +1668,14 @@
 
 <!-- ==================== ADMIN DASHBOARD ==================== -->
 <div id="admin-section" class="hidden min-h-screen bg-slate-50">
-    <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 hidden md:block border-r border-white/5">
+    <div id="admin-sidebar-overlay" class="admin-overlay" onclick="closeAdminSidebar()"></div>
+    <div class="admin-mobile-header fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-lg">
+        <button onclick="openAdminSidebar()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-bars text-lg"></i></button>
+        <div class="flex items-center gap-2"><div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center"><i class="fas fa-shield-alt text-white text-sm"></i></div><span class="font-bold text-sm">AURA Admin</span></div>
+        <button onclick="backToApp()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-arrow-left text-lg"></i></button>
+    </div>
+    <div class="pt-14 md:pt-0 md:hidden"></div>
+    <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 border-r border-white/5">
         <div class="p-6 border-b border-white/5">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showLanding()">
                 <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-shield-alt text-white"></i></div>
@@ -1937,6 +1971,15 @@
             </div>
         </div>
     </main>
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
+        <div class="flex justify-around py-2">
+            <button onclick="showAdminTab('overview')" class="admin-nav flex flex-col items-center gap-1 px-2 py-1 text-slate-500 hover:text-blue-600 transition text-[10px]"><i class="fas fa-home text-lg"></i><span>Vue</span></button>
+            <button onclick="showAdminTab('payments')" class="admin-nav flex flex-col items-center gap-1 px-2 py-1 text-slate-500 hover:text-blue-600 transition text-[10px]"><i class="fas fa-credit-card text-lg"></i><span>Paiements</span></button>
+            <button onclick="showAdminTab('students')" class="admin-nav flex flex-col items-center gap-1 px-2 py-1 text-slate-500 hover:text-blue-600 transition text-[10px]"><i class="fas fa-users text-lg"></i><span>Étudiants</span></button>
+            <button onclick="showAdminTab('questions')" class="admin-nav flex flex-col items-center gap-1 px-2 py-1 text-slate-500 hover:text-blue-600 transition text-[10px]"><i class="fas fa-question-circle text-lg"></i><span>Questions</span></button>
+            <button onclick="showAdminTab('reports')" class="admin-nav flex flex-col items-center gap-1 px-2 py-1 text-slate-500 hover:text-blue-600 transition text-[10px]"><i class="fas fa-flag text-lg"></i><span>Signalements</span></button>
+        </div>
+    </div>
 </div>
 
 <!-- Question Modal -->
@@ -5859,6 +5902,7 @@ async function getAdminPayments() {
 }
 
 function showAdminTab(tab, btn) {
+    closeAdminSidebar();
     try {
         ['overview', 'payments', 'receipts', 'students', 'questions', 'reports', 'trash', 'analytics'].forEach(t => {
             const el = document.getElementById(`admin-${t}`);
@@ -5884,6 +5928,15 @@ function showAdminTab(tab, btn) {
         console.error('Admin tab error:', e); 
         showToast('Erreur: ' + e.message, 'error');
     }
+}
+
+function openAdminSidebar() {
+    document.querySelector('#admin-section aside').classList.add('open');
+    document.getElementById('admin-sidebar-overlay').classList.add('open');
+}
+function closeAdminSidebar() {
+    document.querySelector('#admin-section aside').classList.remove('open');
+    document.getElementById('admin-sidebar-overlay').classList.remove('open');
 }
 
 function backToApp() {
