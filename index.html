@@ -3019,8 +3019,16 @@ function submitRegistrationReceipt() {
                         supabaseClient.from('payments')
                             .update({ receipt_url: pendingRegistration.receipt })
                             .eq('id', pays[0].id)
-                            .then(({ error: updErr }) => {
+                            .then(({ data, error: updErr }) => {
                                 if (updErr) console.warn('Update receipt error:', updErr);
+                                else console.log('[RECEIPT] Saved to Supabase payments.receipt_url');
+                            });
+                    } else {
+                        console.warn('[RECEIPT] No payment record found for student, inserting new one');
+                        supabaseClient.from('payments')
+                            .insert({ student_id: student.supabaseId, amount: student.paymentAmount, status: 'pending', receipt_url: pendingRegistration.receipt })
+                            .then(({ error: insErr }) => {
+                                if (insErr) console.warn('Insert payment with receipt error:', insErr);
                             });
                     }
                 });
@@ -6229,15 +6237,17 @@ function sendValidationEmail(student) {
 
 async function rejectReceiptPayment() {
     if (!receiptStudentId) return;
+    const students = await getAdminPayments();
+    const s = students.find(st => String(st.id) === String(receiptStudentId));
     const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
     if (local) {
         local.paymentStatus = 'pending';
         local.status = 'pending';
         saveStudentsToStorage();
     }
-    if (isSupabaseEnabled() && local && local.supabaseId) {
+    if (isSupabaseEnabled() && s && s.supabaseId) {
         try {
-            await supabaseClient.from('payments').update({ status: 'rejected' }).eq('student_id', local.supabaseId);
+            await supabaseClient.from('payments').update({ status: 'rejected' }).eq('student_id', s.supabaseId);
         } catch (e) { console.warn('Supabase reject error:', e.message); }
     }
     const statusLabel = document.getElementById('receipt-status-label');
@@ -6248,11 +6258,23 @@ async function rejectReceiptPayment() {
 
 async function removeReceiptImage() {
     if (!receiptStudentId) return;
+    const students = await getAdminPayments();
+    const s = students.find(st => String(st.id) === String(receiptStudentId));
     const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
     if (local) {
         local.paymentReceipt = null;
         saveStudentsToStorage();
     }
+    if (isSupabaseEnabled() && s && s.supabaseId) {
+        try {
+            await supabaseClient.from('payments').update({ receipt_url: null }).eq('student_id', s.supabaseId);
+        } catch (e) { console.warn('Supabase remove receipt error:', e.message); }
+    }
+    document.getElementById('receipt-no-image').classList.remove('hidden');
+    document.getElementById('receipt-has-image').classList.add('hidden');
+    await Promise.all([renderAdminReceipts(), renderAdminOverview()]);
+    showToast('Reçu supprimé', 'info');
+}
     if (isSupabaseEnabled() && local && local.supabaseId) {
         try {
             await supabaseClient.from('payments').update({ receipt_url: null }).eq('student_id', local.supabaseId);
@@ -6277,6 +6299,8 @@ async function handleReceiptUpload(e) {
         showToast('Veuillez sélectionner une image', 'error');
         return;
     }
+    const students = await getAdminPayments();
+    const s = students.find(st => String(st.id) === String(receiptStudentId));
     const local = mockStudents.find(st => String(st.id) === String(receiptStudentId));
     const reader = new FileReader();
     reader.onload = async function(ev) {
@@ -6285,9 +6309,9 @@ async function handleReceiptUpload(e) {
             local.paymentReceipt = dataUrl;
             saveStudentsToStorage();
         }
-        if (isSupabaseEnabled() && local && local.supabaseId) {
+        if (isSupabaseEnabled() && s && s.supabaseId) {
             try {
-                await supabaseClient.from('payments').update({ receipt_url: dataUrl }).eq('student_id', local.supabaseId);
+                await supabaseClient.from('payments').update({ receipt_url: dataUrl }).eq('student_id', s.supabaseId);
             } catch (e) {
                 console.warn('Save receipt to Supabase failed:', e);
             }
