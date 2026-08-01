@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AURA - Académie Universitaire de Révision Avancée</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23059669'/%3E%3Cstop offset='100%25' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='60' cy='60' r='56' fill='%230f172a'/%3E%3Ccircle cx='60' cy='52' r='18' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Crect x='55' y='34' width='10' height='8' rx='2' fill='url(%23g)'/%3E%3Ccircle cx='60' cy='52' r='6' fill='url(%23g)' opacity='0.8'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com?v=2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -349,9 +350,15 @@
         <!-- Nav -->
         <nav class="relative z-10 flex items-center justify-between px-4 md:px-8 py-4 md:py-5">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="showLanding()">
-                <div class="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-teal-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:shadow-teal-500/50 transition-all duration-300 group-hover:scale-110">
-                    <i class="fas fa-atom text-white text-lg"></i>
-                </div>
+                <svg class="w-10 h-10 md:w-11 md:h-11 drop-shadow-lg group-hover:scale-110 transition-all duration-300" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs><linearGradient id="aura-g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs>
+                    <circle cx="60" cy="60" r="56" fill="#0f172a"/>
+                    <circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g)" stroke-width="3"/>
+                    <rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g)"/>
+                    <path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g)" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="60" cy="52" r="6" fill="url(#aura-g)" opacity="0.8"/>
+                    <text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text>
+                </svg>
                 <div>
                     <h1 class="text-lg md:text-xl font-extrabold text-white tracking-tight">AURA</h1>
                     <p class="text-[9px] md:text-[10px] text-teal-300/70 tracking-[0.2em] uppercase hidden sm:block">Académie Universitaire</p>
@@ -792,9 +799,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
                 <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-atom text-white text-lg"></i>
-                        </div>
+                        <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#0f172a"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g4)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g4)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g4)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g4)" opacity="0.8"/></svg>
                         <div>
                             <h3 class="text-lg font-extrabold text-white">AURA</h3>
                             <p class="text-[10px] text-teal-300/70 tracking-[0.15em] uppercase">Académie Universitaire</p>
@@ -1031,7 +1036,7 @@
     <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 hidden md:block border-r border-white/5">
         <div class="p-6 border-b border-white/5">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showLanding()">
-                <div class="w-10 h-10 bg-gradient-to-br from-teal-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-atom text-white"></i></div>
+                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#0f172a"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g5)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g5)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g5)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g5)" opacity="0.8"/></svg>
                 <div><h3 class="font-display font-bold text-lg">AURA</h3><p class="text-xs text-teal-300" id="user-level-display">3ème Année</p></div>
             </div>
         </div>
@@ -1671,14 +1676,14 @@
     <div id="admin-sidebar-overlay" class="admin-overlay" onclick="closeAdminSidebar()"></div>
     <div class="admin-mobile-header fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <button onclick="openAdminSidebar()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-bars text-lg"></i></button>
-        <div class="flex items-center gap-2"><div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center"><i class="fas fa-shield-alt text-white text-sm"></i></div><span class="font-bold text-sm">AURA Admin</span></div>
+        <div class="flex items-center gap-2">        <svg class="w-8 h-8" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#f97316"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1e293b"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g2)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g2)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g2)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg><span class="font-bold text-sm">AURA Admin</span></div>
         <button onclick="backToApp()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-arrow-left text-lg"></i></button>
     </div>
     <div class="pt-14 md:pt-0 md:hidden"></div>
     <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 border-r border-white/5">
         <div class="p-6 border-b border-white/5">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showLanding()">
-                <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-shield-alt text-white"></i></div>
+                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#f97316"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1e293b"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g3)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g3)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g3)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g3)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg>
                 <div><h3 class="font-display font-bold text-lg">AURA Admin</h3><p class="text-xs text-amber-300">Panel de gestion</p></div>
             </div>
         </div>
