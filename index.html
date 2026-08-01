@@ -6275,16 +6275,7 @@ async function removeReceiptImage() {
     await Promise.all([renderAdminReceipts(), renderAdminOverview()]);
     showToast('Reçu supprimé', 'info');
 }
-    if (isSupabaseEnabled() && local && local.supabaseId) {
-        try {
-            await supabaseClient.from('payments').update({ receipt_url: null }).eq('student_id', local.supabaseId);
-        } catch (e) { console.warn('Supabase remove receipt error:', e.message); }
-    }
-    document.getElementById('receipt-no-image').classList.remove('hidden');
-    document.getElementById('receipt-has-image').classList.add('hidden');
-    await Promise.all([renderAdminReceipts(), renderAdminOverview()]);
-    showToast('Reçu supprimé', 'info');
-}
+
 
 function saveStudentsToStorage() {
     try { localStorage.setItem('aura_mockStudents', JSON.stringify(mockStudents)); } catch(e) {}
