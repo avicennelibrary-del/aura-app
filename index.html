@@ -3912,7 +3912,7 @@ async function startTrainingQCM() {
             && (!trainingState.source || q.source === trainingState.source)
         );
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour ces filtres.', 'error');
@@ -4141,7 +4141,7 @@ async function startSimulationResidanat() {
     } else {
         currentQuestions = mockQuestions.filter(q => q.source === 'RESIDANAT' && q.year == year);
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM trouvé pour cette année', 'error');
@@ -4351,7 +4351,7 @@ async function startSimulationEMD() {
             && q.source === 'EMD'
         );
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
 
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM EMD trouvé pour ces filtres. Importez des questions EMD dans la base.', 'error');
@@ -4553,7 +4553,7 @@ async function startQCM(course) {
             }
         }
     }
-    currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+    currentQuestions = sortQuestionsByPriority(currentQuestions);
     if (currentQuestions.length === 0) {
         showToast('Aucun QCM ne correspond aux filtres sélectionnés.', 'error');
         return;
@@ -5711,7 +5711,7 @@ function startPlaylistQuiz(courses) {
             if (currentQuestions.length === 0) {
                 currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
             }
-            currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+            currentQuestions = sortQuestionsByPriority(currentQuestions);
             if (currentQuestions.length === 0) {
                 showToast('Aucune question trouvée pour ces cours', 'error');
                 return;
@@ -5735,7 +5735,7 @@ function startPlaylistQuiz(courses) {
         })();
     } else {
         currentQuestions = mockQuestions.filter(q => courses.includes(q.course));
-        currentQuestions = sortQuestionsByPriority(currentQuestions); shuffleArray(currentQuestions);
+        currentQuestions = sortQuestionsByPriority(currentQuestions);
         if (currentQuestions.length === 0) {
             showToast('Aucune question trouvée pour ces cours', 'error');
             return;
