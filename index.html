@@ -3561,7 +3561,7 @@ async function renderSimulationFilters(module) {
             sources = metadata.sources;
         }
     }
-    const moduleQuestions = mockQuestions.filter(q => moduleCourses.includes(q.course));
+    const moduleQuestions = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course)));
     if (!years.length) years = getUniqueSortedValues(moduleQuestions.map(q => q.year));
     if (!sources.length) sources = [...new Set(moduleQuestions.map(q => q.source))].sort();
 
@@ -3614,7 +3614,7 @@ async function applySimulationFilters() {
         });
         count = questions.length;
     } else {
-        count = mockQuestions.filter(q => moduleCourses.includes(q.course)
+        count = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course))
             && (!currentFilter.courses.length || currentFilter.courses.includes(q.course))
             && (!currentFilter.years.length || currentFilter.years.includes(q.year.toString()))
             && (!currentFilter.source || q.source === currentFilter.source)
@@ -3809,7 +3809,7 @@ async function renderTrainingFilterSelection() {
         availableYears = [...new Set(questions.map(q => q.year))].sort((a, b) => a - b);
         availableSources = [...new Set(questions.map(q => q.source))].sort();
     } else {
-        const moduleQuestions = mockQuestions.filter(q => moduleCourses.includes(q.course));
+        const moduleQuestions = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course)));
         availableYears = [...new Set(moduleQuestions.map(q => q.year))].sort((a, b) => a - b);
         availableSources = [...new Set(moduleQuestions.map(q => q.source))].sort();
     }
@@ -4189,7 +4189,7 @@ async function renderSimulationEMDFilters() {
         }
         years = [...new Set(emdQuestions.map(q => q.year))].sort((a, b) => a - b);
     } else {
-        emdQuestions = mockQuestions.filter(q => moduleCourses.includes(q.course) && q.source === 'EMD');
+        emdQuestions = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course)) && q.source === 'EMD');
         years = [...new Set(emdQuestions.map(q => q.year))].sort((a, b) => a - b);
     }
 
@@ -6640,10 +6640,11 @@ function filterQuestionsReview() {
     
     if (sourceFilter) filtered = filtered.filter(q => q.source === sourceFilter);
     if (yearFilter) filtered = filtered.filter(q => q.year === parseInt(yearFilter));
-    if (courseFilter) filtered = filtered.filter(q => q.course === courseFilter);
+    if (courseFilter) filtered = filtered.filter(q => normalizeCourseName(q.course) === normalizeCourseName(courseFilter));
     if (moduleFilter) {
         const moduleCourses = coursesData[moduleFilter] || [];
-        filtered = filtered.filter(q => moduleCourses.includes(q.course));
+        const normalizedModuleCourses = moduleCourses.map(normalizeCourseName);
+        filtered = filtered.filter(q => normalizedModuleCourses.includes(normalizeCourseName(q.course)));
     }
     
     const list = document.getElementById('admin-questions-list');
@@ -6744,7 +6745,7 @@ function onModuleFilterChange() {
     const courseInput = document.getElementById('review-course-filter');
     if (moduleFilter) {
         const moduleCourses = coursesData[moduleFilter] || [];
-        const uniqueCourses = [...new Set(allReviewQuestions.filter(q => moduleCourses.includes(q.course)).map(q => q.course))].sort();
+        const uniqueCourses = [...new Set(allReviewQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course))).map(q => q.course))].sort();
         courseInput.dataset.courses = JSON.stringify(uniqueCourses);
     } else {
         const allCourses = [...new Set(allReviewQuestions.map(q => q.course).filter(Boolean))].sort();
