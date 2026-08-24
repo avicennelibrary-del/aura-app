@@ -6511,9 +6511,7 @@ function renderTrash() {
         const realIdx = trash.length - 1 - i;
         const daysLeft = Math.ceil((q._expiresAt - Date.now()) / 86400000);
         const dateStr = new Date(q._deletedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-        let optionsArray = q.options;
-        if (typeof optionsArray === 'string') { try { optionsArray = JSON.parse(optionsArray); } catch(e) { optionsArray = []; } }
-        if (!Array.isArray(optionsArray)) optionsArray = [];
+        let optionsArray = normalizeOptions(q.options);
         
         return `
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 fade-in" style="animation-delay:${i * 0.03}s">
@@ -6662,9 +6660,7 @@ function filterQuestionsReview() {
     const pageItems = filtered.slice(start, start + ADMIN_PAGE_SIZE);
     
     const renderQ = (q, i) => {
-        let optionsArray = q.options;
-        if (typeof optionsArray === 'string') { try { optionsArray = JSON.parse(optionsArray); } catch(e) { optionsArray = []; } }
-        if (!Array.isArray(optionsArray)) optionsArray = [];
+        let optionsArray = normalizeOptions(q.options);
         
         let correctArray = q.correct;
         if (typeof correctArray === 'string') { try { correctArray = JSON.parse(correctArray); } catch(e) { correctArray = []; } }
