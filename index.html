@@ -7585,28 +7585,32 @@ function showAIAssistant() {
 
 async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie expert qui répond en français.') {
     const cfg = getAIConfig();
-    if (!cfg || !cfg.apiKey) return null;
     try {
         if (isSupabaseEnabled()) {
+            console.log('[AURA AI] Calling ai-proxy Edge Function...');
             const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
                 body: {
-                    model: cfg.model,
+                    model: cfg?.model || 'llama-3.3-70b-versatile',
                     messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }],
                     temperature: 0.7, max_tokens: 1024
                 }
             });
-            if (error) throw error;
-            return data?.choices?.[0]?.message?.content || null;
+            if (error) { console.error('[AURA AI] Edge Function error:', error); throw error; }
+            const content = data?.choices?.[0]?.message?.content;
+            if (!content) { console.warn('[AURA AI] Empty response from Edge Function:', JSON.stringify(data)); }
+            return content || null;
         }
+        if (!cfg || !cfg.apiKey) { console.warn('[AURA AI] No API config and no Supabase'); return null; }
         const response = await fetch(cfg.endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
             body: JSON.stringify({ model: cfg.model, messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 1024 })
         });
-        if (!response.ok) return null;
+        if (!response.ok) { const errText = await response.text(); console.error('[AURA AI] Direct API error:', response.status, errText); return null; }
         const data = await response.json();
         return data.choices?.[0]?.message?.content || null;
     } catch (err) {
+        console.error('[AURA AI] callAI error:', err.message || err);
         return null;
     }
 }
