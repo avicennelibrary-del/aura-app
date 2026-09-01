@@ -5316,12 +5316,8 @@ async function explainWithAI(qi) {
     if (!container || !btn) { console.log('[AURA] Container or button not found for qi=', qi); return; }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Analyse...';
-    container.innerHTML = '<div class="flex items-center gap-2 text-teal-600 text-sm"><i class="fas fa-spinner fa-spin"></i>Préparation de l\'explication...</div>';
-
-    await new Promise(r => setTimeout(r, 300));
-
-    console.log('[AURA] Question data:', JSON.stringify({q: q.q, correct: q.correct, optionsLen: (q.options||[]).length, explanation: q.explanation}));
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Analyse IA...';
+    container.innerHTML = '<div class="flex items-center gap-2 text-teal-600 text-sm"><i class="fas fa-spinner fa-spin"></i>L\'IA génère l\'explication...</div>';
 
     let correctIndices = q.correct || [];
     if (correctIndices.length > 0 && typeof correctIndices[0] === 'string') {
@@ -5330,50 +5326,57 @@ async function explainWithAI(qi) {
             return parseInt(letter);
         }).filter(idx => !isNaN(idx));
     }
-    console.log('[AURA] correctIndices:', correctIndices);
 
     const validOptions = (q.options || []).map((opt, idx) => ({ opt, idx })).filter(item => item.opt && item.opt.trim() !== '' && item.opt !== '-');
     const correctOpts = validOptions.filter(item => correctIndices.includes(item.idx));
+    const wrongOpts = validOptions.filter(item => !correctIndices.includes(item.idx));
     const answer = userAnswers.find(a => a.question === qi);
-    console.log('[AURA] validOptions:', validOptions.length, 'correctOpts:', correctOpts.length, 'answer:', answer ? 'found' : 'none');
 
-    let explanation = '';
+    const correctLetters = correctOpts.map(item => String.fromCharCode(65 + item.idx)).join(', ');
+    const correctTexts = correctOpts.map(item => item.opt);
+    const optionsText = validOptions.map(item => `${String.fromCharCode(65 + item.idx)}. ${item.opt}`).join('\n');
 
-    if (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') {
-        explanation = q.explanation;
-    }
+    const prompt = `Tu es un professeur de pharmacie. Explique cette question de QCM.
 
-    if (correctOpts.length > 0) {
-        const correctLetters = correctOpts.map(item => String.fromCharCode(65 + item.idx)).join(', ');
-        const correctTexts = correctOpts.map(item => item.opt);
+Question : ${q.q}
+Options :
+${optionsText}
+Bonne(s) réponse(s) : ${correctLetters} — ${correctTexts.join(' / ')}
 
-        explanation += (explanation ? '\n\n' : '') + `<strong>Bonne réponse :</strong> ${correctLetters} — ${correctTexts.join(' / ')}`;
+Pour CHAQUE option (A, B, C, D, E), tu DOIS expliquer :
+- Si c'est la BONNE réponse : pourquoi c'est correct (justification scientifique)
+- Si c'est FAUSSE : pourquoi c'est incorrect (ce qui ne va pas)
 
-        const wrongOpts = validOptions.filter(item => !correctIndices.includes(item.idx));
-        if (wrongOpts.length > 0) {
-            explanation += `\n\n<strong>Pourquoi pas les autres ?</strong>`;
-            wrongOpts.forEach(item => {
-                explanation += `\n• ${String.fromCharCode(65 + item.idx)}. ${item.opt} — incorrect.`;
-            });
-        }
+Format attendu :
+**A. [texte de l'option]** — Correct/Faux
+Explication courte et précise.
 
+Sois précis, cite les mécanismes, les molécules, les effets. Maximum 3-4 lignes par option.`;
+
+    const aiResult = await callAI(prompt);
+
+    if (aiResult) {
+        let explanation = aiResult;
         if (answer && !answer.isCorrect && answer.selected && answer.selected.length > 0) {
             const selectedTexts = answer.selected.map(idx => q.options[idx]).filter(Boolean);
             explanation += `\n\n<strong>Votre réponse :</strong> ${selectedTexts.join(', ')} — incorrecte.`;
         } else if (answer && answer.isCorrect) {
             explanation += `\n\n<strong>Votre réponse :</strong> correcte !`;
         }
+        container.innerHTML = `<div class="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-900"><div class="flex items-center gap-2 mb-2"><i class="fas fa-robot text-teal-600"></i><span class="font-bold text-teal-700">Explication IA</span></div><p class="leading-relaxed whitespace-pre-line">${explanation.replace(/\n/g, '<br>')}</p></div>`;
+    } else {
+        let explanation = `<strong>Bonne réponse : ${correctLetters}</strong> — ${correctTexts.join(' / ')}`;
+        if (wrongOpts.length > 0) {
+            explanation += `\n\n<strong>Pourquoi pas les autres ?</strong>`;
+            wrongOpts.forEach(item => {
+                explanation += `\n• ${String.fromCharCode(65 + item.idx)}. ${item.opt} — incorrect.`;
+            });
+        }
+        container.innerHTML = `<div class="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-900"><div class="flex items-center gap-2 mb-2"><i class="fas fa-robot text-teal-600"></i><span class="font-bold text-teal-700">Explication</span></div><p class="leading-relaxed whitespace-pre-line">${explanation}</p></div>`;
     }
 
-    if (!explanation || explanation === 'null') {
-        explanation = 'Consultez vos notes de cours pour comprendre la réponse.';
-    }
-
-    console.log('[AURA] Final explanation length:', explanation.length);
-    container.innerHTML = `<div class="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-900"><div class="flex items-center gap-2 mb-2"><i class="fas fa-robot text-teal-600"></i><span class="font-bold text-teal-700">Explication</span></div><p class="leading-relaxed whitespace-pre-line">${explanation}</p></div>`;
     btn.innerHTML = '<i class="fas fa-check"></i>Explication générée';
     btn.className = 'mt-3 text-sm px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium flex items-center gap-2 w-fit cursor-default';
-    console.log('[AURA] Explanation rendered successfully');
     } catch(e) {
         console.error('[AURA] explainWithAI error:', e);
         const container2 = document.getElementById(`ai-explain-${qi}`);
