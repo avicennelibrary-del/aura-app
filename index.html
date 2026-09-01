@@ -7380,8 +7380,8 @@ function closeMobileMenu() {
 
 // ==================== IA PÉDAGOGIQUE ====================
 const AI_DEFAULTS = {
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    model: 'gemini-2.0-flash',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    model: 'llama-3.3-70b-versatile',
     apiKey: ''
 };
 
@@ -7464,17 +7464,22 @@ async function generateAIExplanation() {
     const correctTexts = correctOpts.map(item => item.opt);
     const optionsText = validOptions.map(item => `${String.fromCharCode(65 + item.idx)}. ${item.opt}`).join('\n');
 
-    const prompt = `Tu es un professeur de pharmacie. Explique cette question de manière claire et pédagogique.
+    const prompt = `Tu es un professeur de pharmacie. Explique cette question de QCM.
 
 Question : ${q.q}
 Options :
 ${optionsText}
 Bonne(s) réponse(s) : ${correctLetters} — ${correctTexts.join(' / ')}
 
-Rédige une explication qui :
-1. Justifie pourquoi chaque bonne réponse est correcte
-2. Explique brièvement pourquoi les autres sont fausses
-3. Donne un conseil ou astuce mnémotechnique`;
+Pour CHAQUE option (A, B, C, D, E), tu DOIS expliquer :
+- Si c'est la BONNE réponse : pourquoi c'est correct (justification scientifique)
+- Si c'est FAUSSE : pourquoi c'est incorrect (ce qui ne va pas)
+
+Format attendu :
+**A. [texte de l'option]** — Correct/Faux
+Explication courte et précise.
+
+Sois précis, cite les mécanismes, les molécules, les effets. Maximum 3-4 lignes par option.`;
 
     const aiResult = await callAI(prompt);
 
@@ -7584,40 +7589,23 @@ function showAIAssistant() {
 }
 
 async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie expert qui répond en français.') {
-    const cfg = getAIConfig();
-    const apiKey = cfg?.apiKey || AI_DEFAULTS.apiKey;
-    if (!apiKey) { console.warn('[AURA AI] No API key configured'); return null; }
     try {
-        const contents = [];
-        if (systemMessage) {
-            contents.push({ role: 'user', parts: [{ text: systemMessage }] });
-            contents.push({ role: 'model', parts: [{ text: 'Compris, je suis prêt à répondre.' }] });
+        if (isSupabaseEnabled()) {
+            console.log('[AURA AI] Calling ai-proxy Edge Function...');
+            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
+                body: {
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }],
+                    temperature: 0.7, max_tokens: 1024
+                }
+            });
+            if (error) { console.error('[AURA AI] Edge Function error:', error); throw error; }
+            const content = data?.choices?.[0]?.message?.content;
+            if (!content) { console.warn('[AURA AI] Empty response:', JSON.stringify(data)); }
+            return content || null;
         }
-        contents.push({ role: 'user', parts: [{ text: prompt }] });
-
-        const endpoint = cfg?.endpoint || AI_DEFAULTS.endpoint;
-        const url = `${endpoint}?key=${apiKey}`;
-        console.log('[AURA AI] Calling Gemini...');
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents,
-                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
-            })
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error('[AURA AI] Gemini error:', response.status, errText);
-            return null;
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) { console.warn('[AURA AI] Empty Gemini response:', JSON.stringify(data)); }
-        return text || null;
+        console.warn('[AURA AI] Supabase not enabled');
+        return null;
     } catch (err) {
         console.error('[AURA AI] callAI error:', err.message || err);
         return null;
@@ -7847,14 +7835,6 @@ function initCountdown() {
 
 // ==================== INITIALISATION GLOBALE ====================
 function initApp() {
-    // Auto-init Gemini API key on first load
-    try {
-        const saved = JSON.parse(localStorage.getItem('aura_ai_config') || 'null');
-        if (!saved || !saved.apiKey) {
-            const _k = atob('QVEuQWI4Uk42SXVDQnp5NWE4b1R0dXJRSjdfLUdJVW5Za0NDelhsSWRHa3YzYjl5THhIRHc=');
-            localStorage.setItem('aura_ai_config', JSON.stringify({ apiKey: _k, endpoint: AI_DEFAULTS.endpoint, model: AI_DEFAULTS.model }));
-        }
-    } catch(e) {}
     // Initialiser le mode sombre
     initDarkMode();
     
