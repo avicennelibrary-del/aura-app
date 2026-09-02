@@ -7599,12 +7599,8 @@ async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt, systemMessage })
         });
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            console.error('[AURA AI] Proxy error:', response.status, errData);
-            return null;
-        }
         const data = await response.json();
+        if (!response.ok) { console.error('[AURA AI] Proxy error:', response.status, data); return null; }
         if (!data.content) { console.warn('[AURA AI] Empty response:', JSON.stringify(data)); }
         return data.content || null;
     } catch (err) {
