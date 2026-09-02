@@ -11,7 +11,8 @@ export default async function handler(req, res) {
 
     const GROQ_KEY = process.env.GROQ_API_KEY || (() => {
         const h = '67736b5f666776444e4855424c6a49646b7a33534552414b5747647962334659734739776e4165724546307252726874746e4372743541';
-        return [...h.match(/.{1,2}/g)].map(b => String.fromCharCode(parseInt(b, 16))).join('');
+        const pairs = h.match(/.{1,2}/g);
+        return pairs.map(b => String.fromCharCode(parseInt(b, 16))).join('');
     })();
 
     if (!GROQ_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
@@ -27,10 +28,10 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_KEY}`
+                'Authorization': 'Bearer ' + GROQ_KEY
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: 'openai/gpt-oss-120b',
                 messages,
                 temperature: 0.7,
                 max_tokens: 1024
