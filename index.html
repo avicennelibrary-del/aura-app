@@ -7592,23 +7592,27 @@ function showAIAssistant() {
 }
 
 async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie expert qui répond en français.') {
+    const GROQ_KEY = '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';
     try {
-        if (isSupabaseEnabled()) {
-            console.log('[AURA AI] Calling ai-proxy Edge Function...');
-            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
-                body: {
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }],
-                    temperature: 0.7, max_tokens: 1024
-                }
-            });
-            if (error) { console.error('[AURA AI] Edge Function error:', error); throw error; }
-            const content = data?.choices?.[0]?.message?.content;
-            if (!content) { console.warn('[AURA AI] Empty response:', JSON.stringify(data)); }
-            return content || null;
+        console.log('[AURA AI] Calling Groq API directly...');
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [{ role: 'system', content: systemMessage }, { role: 'user', content: prompt }],
+                temperature: 0.7, max_tokens: 1024
+            })
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error('[AURA AI] Groq error:', response.status, errText);
+            return null;
         }
-        console.warn('[AURA AI] Supabase not enabled');
-        return null;
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) { console.warn('[AURA AI] Empty Groq response:', JSON.stringify(data)); }
+        return content || null;
     } catch (err) {
         console.error('[AURA AI] callAI error:', err.message || err);
         return null;
