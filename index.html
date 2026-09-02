@@ -7593,7 +7593,7 @@ function showAIAssistant() {
 
 async function callAI(prompt, systemMessage = 'Tu es un professeur de pharmacie expert qui répond en français.') {
     try {
-        console.log('[AURA AI] Calling Gemini via Vercel proxy...');
+        console.log('[AURA AI] Calling Groq via proxy...');
         const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

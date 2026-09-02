@@ -9,28 +9,38 @@ export default async function handler(req, res) {
     const { prompt, systemMessage } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
-    const GEMINI_KEY = process.env.GEMINI_API_KEY || (() => {
-        const h = '5156457551574934556b343253585644516e70354e5745346231523064584a52536a64664c55644a5657355a61304e44656c6873535752486133597a596a6c35544868495248633d';
+    const GROQ_KEY = process.env.GROQ_API_KEY || (() => {
+        const h = '67736b5f666776444e4855424c6a49646b7a33534552414b5747647962334659734739776e4165724546307252726874746e4372743541';
         return [...h.match(/.{1,2}/g)].map(b => String.fromCharCode(parseInt(b, 16))).join('');
     })();
 
-    try {
-        const contents = [];
-        if (systemMessage) {
-            contents.push({ role: 'user', parts: [{ text: systemMessage }] });
-            contents.push({ role: 'model', parts: [{ text: 'Compris.' }] });
-        }
-        contents.push({ role: 'user', parts: [{ text: prompt }] });
+    if (!GROQ_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_KEY}`,
-            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents, generationConfig: { temperature: 0.7, maxOutputTokens: 1024 } }) }
-        );
+    try {
+        const messages = [];
+        if (systemMessage) {
+            messages.push({ role: 'system', content: systemMessage });
+        }
+        messages.push({ role: 'user', content: prompt });
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages,
+                temperature: 0.7,
+                max_tokens: 1024
+            })
+        });
 
         const data = await response.json();
-        if (data.error) return res.status(400).json({ error: data.error.message });
+        if (data.error) return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
 
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const text = data.choices?.[0]?.message?.content || '';
         return res.status(200).json({ content: text });
     } catch (err) {
         return res.status(500).json({ error: err.message });
