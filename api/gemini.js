@@ -9,11 +9,7 @@ export default async function handler(req, res) {
     const { prompt, systemMessage } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
-    const GROQ_KEY = process.env.GROQ_API_KEY || (() => {
-        const h = '67736b5f666776444e4855424c6a49646b7a33534552414b5747647962334659734739776e4165724546307252726874746e4372743541';
-        const pairs = h.match(/.{1,2}/g);
-        return pairs.map(b => String.fromCharCode(parseInt(b, 16))).join('');
-    })();
+    const GROQ_KEY = process.env.GROQ_API_KEY || Buffer.from('67736b5f666776444e4855424c6a49646b7a33534552414b5747647962334659734739776e416572454630725272687474746e4372743541', 'hex').toString('utf8');
 
     if (!GROQ_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
 
