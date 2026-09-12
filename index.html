@@ -3748,7 +3748,6 @@ async function renderTrainingCourseSelection() {
     document.getElementById('simulation-filter-panel').classList.add('hidden');
     const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un cours..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
     const isTrial = currentUser?.subscription_status === 'trial';
-    console.log('DEBUG: subCourses count:', subCourses.length, 'isTrial:', isTrial);
     coursesGrid.innerHTML = searchHtml + subCourses.map((course, idx) => {
         const locked = isTrial && !TRIAL_FREE_COURSES.includes(course);
         if (locked) {
