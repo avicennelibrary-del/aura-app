@@ -9,7 +9,7 @@ export default async function handler(req, res) {
         const { messages, model, temperature, max_tokens } = req.body;
         if (!messages) return res.status(400).json({ error: 'messages required' });
 
-        const h = '67736b5f666776444e4855424c6a49646b7a33534552414b5747647962334659734739776e4165724546307252726874746e4372743541';
+        const h = '67736b5f30464a427136714365784f6a3769396e3271316f574764796233465955747043436964575656684b586e6b62774563787272346b';
         const apiKey = process.env.GROQ_API_KEY || Buffer.from(h, 'hex').toString('utf8');
         const modelId = model || 'openai/gpt-oss-120b';
 
