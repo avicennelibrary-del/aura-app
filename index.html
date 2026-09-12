@@ -5316,12 +5316,8 @@ async function explainWithAI(qi) {
     if (!container || !btn) { console.log('[AURA] Container or button not found for qi=', qi); return; }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Analyse...';
-    container.innerHTML = '<div class="flex items-center gap-2 text-teal-600 text-sm"><i class="fas fa-spinner fa-spin"></i>Préparation de l\'explication...</div>';
-
-    await new Promise(r => setTimeout(r, 300));
-
-    console.log('[AURA] Question data:', JSON.stringify({q: q.q, correct: q.correct, optionsLen: (q.options||[]).length, explanation: q.explanation}));
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Analyse IA en cours...';
+    container.innerHTML = '<div class="flex items-center gap-2 text-teal-600 text-sm"><i class="fas fa-spinner fa-spin"></i>L\'IA prépare l\'explication...</div>';
 
     let correctIndices = q.correct || [];
     if (correctIndices.length > 0 && typeof correctIndices[0] === 'string') {
@@ -5330,50 +5326,44 @@ async function explainWithAI(qi) {
             return parseInt(letter);
         }).filter(idx => !isNaN(idx));
     }
-    console.log('[AURA] correctIndices:', correctIndices);
 
-    const validOptions = (q.options || []).map((opt, idx) => ({ opt, idx })).filter(item => item.opt && item.opt.trim() !== '' && item.opt !== '-');
-    const correctOpts = validOptions.filter(item => correctIndices.includes(item.idx));
-    const answer = userAnswers.find(a => a.question === qi);
-    console.log('[AURA] validOptions:', validOptions.length, 'correctOpts:', correctOpts.length, 'answer:', answer ? 'found' : 'none');
+    const options = (q.options || []).map((opt, idx) => `${String.fromCharCode(65 + idx)}. ${opt}`).join('\n');
+    const correctLetters = correctIndices.map(i => String.fromCharCode(65 + i)).join(', ');
+
+    const prompt = `Question: ${q.q}\n\nOptions:\n${options}\n\nBonne(s) réponse(s): ${correctLetters}\n${q.explanation ? 'Explication existante: ' + q.explanation : ''}
+
+En tant que professeur de pharmacie expert, explique en français pourquoi la bonne réponse est ${correctLetters} et pourquoi les autres options sont incorrectes. Sois précis et pédagogique. Réponds en 3-5 lignes maximum.`;
+
+    const aiResult = await callAI(prompt);
 
     let explanation = '';
 
-    if (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') {
+    if (aiResult) {
+        explanation = aiResult;
+    } else if (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') {
         explanation = q.explanation;
     }
 
-    if (correctOpts.length > 0) {
-        const correctLetters = correctOpts.map(item => String.fromCharCode(65 + item.idx)).join(', ');
-        const correctTexts = correctOpts.map(item => item.opt);
+    if (correctIndices.length > 0 && !aiResult) {
+        const correctOpts = (q.options || []).filter((_, idx) => correctIndices.includes(idx));
+        explanation += (explanation ? '\n\n' : '') + `<strong>Bonne réponse :</strong> ${correctLetters} — ${correctOpts.join(' / ')}`;
+    }
 
-        explanation += (explanation ? '\n\n' : '') + `<strong>Bonne réponse :</strong> ${correctLetters} — ${correctTexts.join(' / ')}`;
-
-        const wrongOpts = validOptions.filter(item => !correctIndices.includes(item.idx));
-        if (wrongOpts.length > 0) {
-            explanation += `\n\n<strong>Pourquoi pas les autres ?</strong>`;
-            wrongOpts.forEach(item => {
-                explanation += `\n• ${String.fromCharCode(65 + item.idx)}. ${item.opt} — incorrect.`;
-            });
-        }
-
-        if (answer && !answer.isCorrect && answer.selected && answer.selected.length > 0) {
-            const selectedTexts = answer.selected.map(idx => q.options[idx]).filter(Boolean);
-            explanation += `\n\n<strong>Votre réponse :</strong> ${selectedTexts.join(', ')} — incorrecte.`;
-        } else if (answer && answer.isCorrect) {
-            explanation += `\n\n<strong>Votre réponse :</strong> correcte !`;
-        }
+    const answer = userAnswers.find(a => a.question === qi);
+    if (answer && !answer.isCorrect && answer.selected && answer.selected.length > 0) {
+        const selectedTexts = answer.selected.map(idx => q.options[idx]).filter(Boolean);
+        explanation += `\n\n<strong>Votre réponse :</strong> ${selectedTexts.join(', ')} — incorrecte.`;
+    } else if (answer && answer.isCorrect) {
+        explanation += `\n\n<strong>Votre réponse :</strong> correcte !`;
     }
 
     if (!explanation || explanation === 'null') {
         explanation = 'Consultez vos notes de cours pour comprendre la réponse.';
     }
 
-    console.log('[AURA] Final explanation length:', explanation.length);
-    container.innerHTML = `<div class="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-900"><div class="flex items-center gap-2 mb-2"><i class="fas fa-robot text-teal-600"></i><span class="font-bold text-teal-700">Explication</span></div><p class="leading-relaxed whitespace-pre-line">${explanation}</p></div>`;
+    container.innerHTML = `<div class="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-900"><div class="flex items-center gap-2 mb-2"><i class="fas fa-robot text-teal-600"></i><span class="font-bold text-teal-700">Explication IA</span></div><p class="leading-relaxed whitespace-pre-line">${explanation}</p></div>`;
     btn.innerHTML = '<i class="fas fa-check"></i>Explication générée';
     btn.className = 'mt-3 text-sm px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium flex items-center gap-2 w-fit cursor-default';
-    console.log('[AURA] Explanation rendered successfully');
     } catch(e) {
         console.error('[AURA] explainWithAI error:', e);
         const container2 = document.getElementById(`ai-explain-${qi}`);
@@ -5544,42 +5534,11 @@ function prevFlashcard() {
 }
 
 async function generateFlashcardAI(q) {
-    const cfg = getAIConfig();
-    if (!cfg) { document.getElementById('flashcard-ai-spinner').classList.add('hidden'); return; }
     const validOptForAI = q.options.map((opt, idx) => ({ opt, idx })).filter(item => item.opt && item.opt.trim() !== '' && item.opt !== '-');
     const optionsText = validOptForAI.map((item, displayIdx) => `${String.fromCharCode(65 + displayIdx)}. ${item.opt}`).join('\n');
     try {
-        let aiText = '';
-        if (isSupabaseEnabled()) {
-            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
-                body: {
-                    model: cfg.model,
-                    messages: [
-                        { role: 'system', content: 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.' },
-                        { role: 'user', content: `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.` }
-                    ],
-                    temperature: 0.7, max_tokens: 400
-                }
-            });
-            if (error) throw error;
-            aiText = data?.choices?.[0]?.message?.content || '';
-        } else {
-            const resp = await fetch(cfg.endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
-                body: JSON.stringify({
-                    model: cfg.model,
-                    messages: [
-                        { role: 'system', content: 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.' },
-                        { role: 'user', content: `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.` }
-                    ],
-                    temperature: 0.7, max_tokens: 400
-                })
-            });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            aiText = data.choices?.[0]?.message?.content || '';
-        }
+        const prompt = `Question : ${q.q}\n\nOptions :\n${optionsText}\n\nBonne(s) réponse(s) : ${toLetters(q.correct)}\n\nExplique pourquoi ces réponses sont correctes et pourquoi les autres sont fausses.`;
+        const aiText = await callAI(prompt, 'Tu es un professeur de pharmacie. Explique de façon claire et concise en 3-5 phrases.');
         if (aiText) {
             document.getElementById('flashcard-explanation').innerHTML += `<div class="mt-4 pt-4 border-t border-slate-200"><p class="font-semibold text-teal-700 mb-2"><i class="fas fa-robot mr-1"></i>Explication IA :</p><p class="text-slate-600">${escapeHtml(aiText).replace(/\n/g, '<br>')}</p></div>`;
         }
