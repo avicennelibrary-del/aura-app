@@ -1370,10 +1370,18 @@
                     <span id="flashcard-counter" class="text-sm font-semibold text-slate-600"></span>
                 </div>
                 <div id="flashcard-filter-bar" class="mb-6">
-                    <div id="flashcard-course-checkboxes" class="bg-white rounded-xl border border-slate-200 p-4 max-h-60 overflow-y-auto">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="relative mb-3">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input id="flashcard-search" type="text" placeholder="Rechercher un cours..." oninput="filterFlashcardCourses(this.value)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div id="flashcard-course-checkboxes" class="max-h-60 overflow-y-auto"></div>
                     </div>
                     <div class="flex items-center justify-between mt-3">
-                        <button onclick="selectAllFlashcardCourses()" class="text-xs text-teal-600 font-semibold hover:underline">Tout sélectionner</button>
+                        <div class="flex items-center gap-3">
+                            <button onclick="selectAllFlashcardCourses()" class="text-xs text-teal-600 font-semibold hover:underline">Tout sélectionner</button>
+                            <button onclick="deselectAllFlashcardCourses()" class="text-xs text-slate-500 font-semibold hover:underline">Tout désélectionner</button>
+                        </div>
                         <button onclick="applyFlashcardCourseFilter()" class="px-4 py-2 bg-teal-500 text-white text-sm font-semibold rounded-lg hover:bg-teal-600 transition">Appliquer</button>
                     </div>
                 </div>
@@ -5475,23 +5483,59 @@ function buildFlashcardCourseSelect() {
         const subs = coursesData[pm] || [];
         const subCourses = subs.filter(s => coursesData[s] && coursesData[s].length > 0);
         if (subCourses.length === 0) return;
-        html += `<div class="mb-3"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">${pm}</p>`;
+        const allCourses = [];
+        subCourses.forEach(s => (coursesData[s] || []).forEach(c => allCourses.push(c)));
+        html += `<div class="mb-3 flashcard-filter-group" data-search="${pm.toLowerCase()}">`;
+        html += `<label class="flex items-center gap-2 px-2 py-1.5 rounded bg-slate-50 cursor-pointer mb-1"><input type="checkbox" value="${escAttr(pm)}" class="flashcard-module-cb h-4 w-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500" onchange="toggleFlashcardModule('${escAttr(pm)}', this.checked)"><span class="text-sm font-bold text-slate-800">${pm}</span><span class="text-xs text-slate-400 ml-auto">${allCourses.length} cours</span></label>`;
         subCourses.forEach(sub => {
             const courses = coursesData[sub] || [];
-            html += `<p class="text-xs font-semibold text-slate-700 mt-2 mb-1">${sub}</p>`;
+            html += `<div class="ml-5 mb-1 flashcard-filter-group" data-search="${sub.toLowerCase()} ${courses.join(' ').toLowerCase()}">`;
+            html += `<label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" value="${escAttr(sub)}" class="flashcard-sub-cb h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" onchange="toggleFlashcardSub('${escAttr(sub)}', this.checked)"><span class="text-xs font-semibold text-slate-700">${sub}</span><span class="text-xs text-slate-400 ml-auto">${courses.length}</span></label>`;
             courses.forEach(course => {
-                html += `<label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" value="${escAttr(course)}" class="flashcard-course-cb h-4 w-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"><span class="text-sm text-slate-700">${course}</span></label>`;
+                html += `<label class="flex items-center gap-2 px-2 py-0.5 ml-5 rounded hover:bg-slate-50 cursor-pointer flashcard-filter-group" data-search="${course.toLowerCase()}"><input type="checkbox" value="${escAttr(course)}" class="flashcard-course-cb h-3.5 w-3.5 text-teal-600 border-slate-300 rounded focus:ring-teal-500" data-sub="${escAttr(sub)}" onchange="updateFlashcardSubState('${escAttr(sub)}')"><span class="text-xs text-slate-600">${course}</span></label>`;
             });
+            html += '</div>';
         });
         html += '</div>';
     });
     container.innerHTML = html;
 }
 
-function selectAllFlashcardCourses() {
-    const cbs = document.querySelectorAll('.flashcard-course-cb');
+function toggleFlashcardModule(pm, checked) {
+    const subs = coursesData[pm] || [];
+    subs.forEach(sub => {
+        document.querySelectorAll(`.flashcard-course-cb[data-sub="${CSS.escape(sub)}"]`).forEach(cb => cb.checked = checked);
+        const subCb = document.querySelector(`.flashcard-sub-cb[value="${sub}"]`);
+        if (subCb) subCb.checked = checked;
+    });
+}
+
+function toggleFlashcardSub(sub, checked) {
+    document.querySelectorAll(`.flashcard-course-cb[data-sub="${CSS.escape(sub)}"]`).forEach(cb => cb.checked = checked);
+}
+
+function updateFlashcardSubState(sub) {
+    const cbs = document.querySelectorAll(`.flashcard-course-cb[data-sub="${CSS.escape(sub)}"]`);
     const allChecked = Array.from(cbs).every(cb => cb.checked);
-    cbs.forEach(cb => cb.checked = !allChecked);
+    const someChecked = Array.from(cbs).some(cb => cb.checked);
+    const subCb = document.querySelector(`.flashcard-sub-cb[value="${sub}"]`);
+    if (subCb) subCb.checked = allChecked;
+}
+
+function filterFlashcardCourses(query) {
+    const term = query.toLowerCase().trim();
+    document.querySelectorAll('.flashcard-filter-group').forEach(el => {
+        const search = el.getAttribute('data-search') || '';
+        el.style.display = (!term || search.includes(term)) ? '' : 'none';
+    });
+}
+
+function selectAllFlashcardCourses() {
+    document.querySelectorAll('.flashcard-course-cb, .flashcard-module-cb, .flashcard-sub-cb').forEach(cb => cb.checked = true);
+}
+
+function deselectAllFlashcardCourses() {
+    document.querySelectorAll('.flashcard-course-cb, .flashcard-module-cb, .flashcard-sub-cb').forEach(cb => cb.checked = false);
 }
 
 function applyFlashcardCourseFilter() {
