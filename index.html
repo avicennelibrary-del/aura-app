@@ -5542,8 +5542,12 @@ function applyFlashcardCourseFilter() {
         flashcardQuestions = [...flashcardAllQuestions];
     } else {
         const normSelected = selected.map(normalizeCourseName);
+        const availableCourses = [...new Set(flashcardAllQuestions.map(q => q.course))];
+        console.log('[AURA] Filter selected:', selected);
+        console.log('[AURA] Available courses in questions:', availableCourses);
         flashcardQuestions = flashcardAllQuestions.filter(q => normSelected.includes(normalizeCourseName(q.course)));
     }
+    console.log('[AURA] Filtered questions count:', flashcardQuestions.length);
     if (flashcardQuestions.length === 0) {
         showToast('Aucune question pour les cours sélectionnés', 'error');
         return;
