@@ -5546,6 +5546,11 @@ function applyFlashcardCourseFilter() {
         console.log('[AURA] Filter selected:', selected);
         console.log('[AURA] Available courses in questions:', availableCourses);
         flashcardQuestions = flashcardAllQuestions.filter(q => normSelected.includes(normalizeCourseName(q.course)));
+        if (flashcardQuestions.length === 0 && isSupabaseEnabled()) {
+            console.log('[AURA] No local match, trying Supabase direct query...');
+            loadFlashcardByCourses(selected);
+            return;
+        }
     }
     console.log('[AURA] Filtered questions count:', flashcardQuestions.length);
     if (flashcardQuestions.length === 0) {
@@ -5556,6 +5561,26 @@ function applyFlashcardCourseFilter() {
     flashcardIndex = 0;
     renderFlashcard();
     showToast(`${flashcardQuestions.length} question(s) sélectionnée(s)`, 'success');
+}
+
+async function loadFlashcardByCourses(courses) {
+    try {
+        showToast('Chargement des questions...', 'info');
+        const { data, error } = await supabaseClient.from('questions').select('*').in('course', courses);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            showToast('Aucune question pour les cours sélectionnés dans la base', 'error');
+            return;
+        }
+        flashcardQuestions = data.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
+        flashcardQuestions.sort(() => Math.random() - 0.5);
+        flashcardIndex = 0;
+        renderFlashcard();
+        showToast(`${flashcardQuestions.length} question(s) chargée(s)`, 'success');
+    } catch(e) {
+        console.error('[AURA] loadFlashcardByCourses error:', e);
+        showToast('Erreur de chargement', 'error');
+    }
 }
 
 async function startFlashcardMode() {
