@@ -3447,7 +3447,7 @@ async function renderTendanceGrid() {
     let questions = [];
     if (isSupabaseEnabled()) {
         try {
-            const { data, error } = await supabaseClient.from('questions').select('course, year, source');
+            const { data, error } = await supabaseClient.from('questions').select('course, year, source').eq('source', 'RESIDANAT');
             if (!error && data) questions = data;
         } catch(e) {}
     }
