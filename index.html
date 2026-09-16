@@ -3451,36 +3451,32 @@ async function renderTendanceGrid() {
             if (!error && data) questions = data;
         } catch(e) {}
     }
-    if (questions.length === 0) {
-        container.innerHTML = '<div class="text-center py-4 text-slate-400">Aucune donnée disponible</div>';
-        return;
-    }
 
     const moduleColors = {
-        "Module Biologique": { bg: 'bg-blue-50', border: 'border-blue-100', badge: 'bg-blue-500', text: 'text-blue-700' },
-        "Module Pharmaceutique": { bg: 'bg-teal-50', border: 'border-teal-100', badge: 'bg-teal-500', text: 'text-teal-700' },
-        "Module Fondamental": { bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-500', text: 'text-amber-700' }
+        "Module Biologique": { bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-blue-100 dark:border-blue-800', badge: 'bg-blue-500', text: 'text-blue-700 dark:text-blue-300' },
+        "Module Pharmaceutique": { bg: 'bg-teal-50 dark:bg-teal-900/30', border: 'border-teal-100 dark:border-teal-800', badge: 'bg-teal-500', text: 'text-teal-700 dark:text-teal-300' },
+        "Module Fondamental": { bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-amber-100 dark:border-amber-800', badge: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-300' }
     };
 
     const parentModules = ['Module Biologique', 'Module Pharmaceutique', 'Module Fondamental'];
     const years = [...new Set(questions.map(q => q.year))].sort((a, b) => b - a);
+    if (years.length === 0) for (let y = 2025; y >= 2018; y--) years.push(y);
 
-    const globalMaxCount = Math.max(1, ...questions.map(q => q.year ? questions.filter(q2 => q2.course === q.course && q2.year === q.year).length : 0));
+    const globalMaxCount = Math.max(1, ...questions.map(q => {
+        return questions.filter(q2 => q2.course === q.course && q2.year === q.year).length;
+    }));
 
     let html = '';
 
     parentModules.forEach(pm => {
         const subModules = coursesData[pm] || [];
-        const colors = moduleColors[pm] || { bg: 'bg-purple-50', border: 'border-purple-100', badge: 'bg-purple-500', text: 'text-purple-700' };
-
+        const colors = moduleColors[pm];
         let moduleHtml = '';
-        let moduleHasData = false;
 
         subModules.forEach(sub => {
             const courses = coursesData[sub] || [];
             if (courses.length === 0) return;
 
-            let subHasData = false;
             let rowsHtml = '';
 
             courses.forEach(course => {
@@ -3492,37 +3488,32 @@ async function renderTendanceGrid() {
                     }
                 });
                 const total = years.reduce((sum, y) => sum + (courseYearCounts[y] || 0), 0);
-                if (total === 0) return;
-                subHasData = true;
 
-                rowsHtml += `<tr class="border-b border-slate-50 hover:bg-slate-50/50"><td class="py-2 px-3 font-medium text-slate-800 whitespace-nowrap" title="${course}"><span class="truncate block max-w-[200px]">${course}</span></td>`;
+                rowsHtml += `<tr class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30"><td class="py-2 px-3 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap" title="${course}"><span class="truncate block max-w-[200px]">${course}</span></td>`;
                 years.forEach(y => {
                     const count = courseYearCounts[y] || 0;
                     const ratio = globalMaxCount > 0 ? count / globalMaxCount : 0;
-                    let color = 'bg-slate-50 text-slate-400';
+                    let color = 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500';
                     if (count > 0) {
-                        if (ratio >= 0.6) color = 'bg-red-100 text-red-700 font-bold';
-                        else if (ratio >= 0.3) color = 'bg-amber-100 text-amber-700 font-semibold';
-                        else color = 'bg-green-100 text-green-700';
+                        if (ratio >= 0.6) color = 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 font-bold';
+                        else if (ratio >= 0.3) color = 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-semibold';
+                        else color = 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300';
                     }
                     rowsHtml += `<td class="text-center py-2 px-2"><span class="inline-block px-2 py-1 rounded-lg text-xs ${color}">${count || '-'}</span></td>`;
                 });
-                const totalColor = total >= 10 ? 'text-red-600 font-bold' : total >= 5 ? 'text-amber-600 font-semibold' : 'text-green-600';
+                const totalColor = total >= 10 ? 'text-red-600 dark:text-red-400 font-bold' : total >= 5 ? 'text-amber-600 dark:text-amber-400 font-semibold' : total > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-600';
                 rowsHtml += `<td class="text-center py-2 px-2"><span class="text-xs ${totalColor}">${total}</span></td></tr>`;
             });
 
-            if (subHasData) {
-                moduleHasData = true;
-                moduleHtml += `<p class="text-xs font-semibold text-slate-600 mt-3 mb-1 ml-1">${sub}</p>`;
-                moduleHtml += `<table class="w-full text-sm mb-2"><thead><tr class="border-b border-slate-200"><th class="text-left py-1 px-3 text-xs font-bold text-slate-500">Cours</th>`;
-                years.forEach(y => { moduleHtml += `<th class="text-center py-1 px-2 text-xs font-bold text-slate-500">${y}</th>`; });
-                moduleHtml += '<th class="text-center py-1 px-2 text-xs font-bold text-slate-500">Total</th></tr></thead><tbody>';
-                moduleHtml += rowsHtml;
-                moduleHtml += '</tbody></table>';
-            }
+            moduleHtml += `<p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-3 mb-1 ml-1">${sub} <span class="text-slate-400 dark:text-slate-500">(${courses.length})</span></p>`;
+            moduleHtml += `<div class="overflow-x-auto"><table class="w-full text-sm mb-2"><thead><tr class="border-b border-slate-200 dark:border-slate-700"><th class="text-left py-1 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">Cours</th>`;
+            years.forEach(y => { moduleHtml += `<th class="text-center py-1 px-2 text-xs font-bold text-slate-500 dark:text-slate-400">${y}</th>`; });
+            moduleHtml += '<th class="text-center py-1 px-2 text-xs font-bold text-slate-500 dark:text-slate-400">Total</th></tr></thead><tbody>';
+            moduleHtml += rowsHtml;
+            moduleHtml += '</tbody></table></div>';
         });
 
-        if (moduleHasData) {
+        if (moduleHtml) {
             html += `<div class="${colors.bg} rounded-2xl p-4 border ${colors.border} mb-4">
                 <div class="flex items-center gap-3 mb-3"><span class="px-3 py-1 ${colors.badge} text-white text-xs font-bold rounded-full">${pm}</span></div>
                 ${moduleHtml}
