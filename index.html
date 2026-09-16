@@ -3456,57 +3456,81 @@ async function renderTendanceGrid() {
         return;
     }
 
-    const parentModules = ['Module Biologique', 'Module Pharmaceutique', 'Module Fondamental'];
-    const allCourses = [];
-    parentModules.forEach(pm => {
-        (coursesData[pm] || []).forEach(sub => {
-            (coursesData[sub] || []).forEach(c => allCourses.push(c));
-        });
-    });
+    const moduleColors = {
+        "Module Biologique": { bg: 'bg-blue-50', border: 'border-blue-100', badge: 'bg-blue-500', text: 'text-blue-700' },
+        "Module Pharmaceutique": { bg: 'bg-teal-50', border: 'border-teal-100', badge: 'bg-teal-500', text: 'text-teal-700' },
+        "Module Fondamental": { bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-500', text: 'text-amber-700' }
+    };
 
+    const parentModules = ['Module Biologique', 'Module Pharmaceutique', 'Module Fondamental'];
     const years = [...new Set(questions.map(q => q.year))].sort((a, b) => b - a);
 
-    const courseYearCounts = {};
-    allCourses.forEach(c => { courseYearCounts[c] = {}; years.forEach(y => { courseYearCounts[c][y] = 0; }); });
-    questions.forEach(q => {
-        const course = allCourses.find(c => normalizeCourseName(c) === normalizeCourseName(q.course));
-        if (course && q.year && courseYearCounts[course]) {
-            if (!courseYearCounts[course][q.year]) courseYearCounts[course][q.year] = 0;
-            courseYearCounts[course][q.year]++;
+    const globalMaxCount = Math.max(1, ...questions.map(q => q.year ? questions.filter(q2 => q2.course === q.course && q2.year === q.year).length : 0));
+
+    let html = '';
+
+    parentModules.forEach(pm => {
+        const subModules = coursesData[pm] || [];
+        const colors = moduleColors[pm] || { bg: 'bg-purple-50', border: 'border-purple-100', badge: 'bg-purple-500', text: 'text-purple-700' };
+
+        let moduleHtml = '';
+        let moduleHasData = false;
+
+        subModules.forEach(sub => {
+            const courses = coursesData[sub] || [];
+            if (courses.length === 0) return;
+
+            let subHasData = false;
+            let rowsHtml = '';
+
+            courses.forEach(course => {
+                const courseYearCounts = {};
+                years.forEach(y => { courseYearCounts[y] = 0; });
+                questions.forEach(q => {
+                    if (normalizeCourseName(q.course) === normalizeCourseName(course) && q.year) {
+                        courseYearCounts[q.year] = (courseYearCounts[q.year] || 0) + 1;
+                    }
+                });
+                const total = years.reduce((sum, y) => sum + (courseYearCounts[y] || 0), 0);
+                if (total === 0) return;
+                subHasData = true;
+
+                rowsHtml += `<tr class="border-b border-slate-50 hover:bg-slate-50/50"><td class="py-2 px-3 font-medium text-slate-800 whitespace-nowrap" title="${course}"><span class="truncate block max-w-[200px]">${course}</span></td>`;
+                years.forEach(y => {
+                    const count = courseYearCounts[y] || 0;
+                    const ratio = globalMaxCount > 0 ? count / globalMaxCount : 0;
+                    let color = 'bg-slate-50 text-slate-400';
+                    if (count > 0) {
+                        if (ratio >= 0.6) color = 'bg-red-100 text-red-700 font-bold';
+                        else if (ratio >= 0.3) color = 'bg-amber-100 text-amber-700 font-semibold';
+                        else color = 'bg-green-100 text-green-700';
+                    }
+                    rowsHtml += `<td class="text-center py-2 px-2"><span class="inline-block px-2 py-1 rounded-lg text-xs ${color}">${count || '-'}</span></td>`;
+                });
+                const totalColor = total >= 10 ? 'text-red-600 font-bold' : total >= 5 ? 'text-amber-600 font-semibold' : 'text-green-600';
+                rowsHtml += `<td class="text-center py-2 px-2"><span class="text-xs ${totalColor}">${total}</span></td></tr>`;
+            });
+
+            if (subHasData) {
+                moduleHasData = true;
+                moduleHtml += `<p class="text-xs font-semibold text-slate-600 mt-3 mb-1 ml-1">${sub}</p>`;
+                moduleHtml += `<table class="w-full text-sm mb-2"><thead><tr class="border-b border-slate-200"><th class="text-left py-1 px-3 text-xs font-bold text-slate-500">Cours</th>`;
+                years.forEach(y => { moduleHtml += `<th class="text-center py-1 px-2 text-xs font-bold text-slate-500">${y}</th>`; });
+                moduleHtml += '<th class="text-center py-1 px-2 text-xs font-bold text-slate-500">Total</th></tr></thead><tbody>';
+                moduleHtml += rowsHtml;
+                moduleHtml += '</tbody></table>';
+            }
+        });
+
+        if (moduleHasData) {
+            html += `<div class="${colors.bg} rounded-2xl p-4 border ${colors.border} mb-4">
+                <div class="flex items-center gap-3 mb-3"><span class="px-3 py-1 ${colors.badge} text-white text-xs font-bold rounded-full">${pm}</span></div>
+                ${moduleHtml}
+            </div>`;
         }
     });
 
-    const maxCount = Math.max(1, ...questions.map(q => {
-        const course = allCourses.find(c => normalizeCourseName(c) === normalizeCourseName(q.course));
-        return course ? (courseYearCounts[course]?.[q.year] || 0) : 0;
-    }));
-
-    let html = '<table class="w-full text-sm"><thead><tr class="border-b border-slate-200"><th class="text-left py-2 px-3 font-bold text-slate-700 sticky left-0 bg-white">Cours</th>';
-    years.forEach(y => { html += `<th class="text-center py-2 px-2 font-bold text-slate-600">${y}</th>`; });
-    html += '<th class="text-center py-2 px-2 font-bold text-slate-600">Total</th></tr></thead><tbody>';
-
-    allCourses.forEach(course => {
-        const total = years.reduce((sum, y) => sum + (courseYearCounts[course]?.[y] || 0), 0);
-        if (total === 0) return;
-
-        html += `<tr class="border-b border-slate-50 hover:bg-slate-50/50"><td class="py-2 px-3 font-medium text-slate-800 sticky left-0 bg-white whitespace-nowrap" title="${course}"><span class="truncate block max-w-[200px]">${course}</span></td>`;
-        years.forEach(y => {
-            const count = courseYearCounts[course]?.[y] || 0;
-            const ratio = maxCount > 0 ? count / maxCount : 0;
-            let color = 'bg-slate-50 text-slate-400';
-            if (count > 0) {
-                if (ratio >= 0.6) color = 'bg-red-100 text-red-700 font-bold';
-                else if (ratio >= 0.3) color = 'bg-amber-100 text-amber-700 font-semibold';
-                else color = 'bg-green-100 text-green-700';
-            }
-            html += `<td class="text-center py-2 px-2"><span class="inline-block px-2 py-1 rounded-lg text-xs ${color}">${count || '-'}</span></td>`;
-        });
-        const totalColor = total >= 10 ? 'text-red-600 font-bold' : total >= 5 ? 'text-amber-600 font-semibold' : 'text-green-600';
-        html += `<td class="text-center py-2 px-2"><span class="text-xs ${totalColor}">${total}</span></td></tr>`;
-    });
-
-    html += '</tbody></table>';
-    container.innerHTML = html;
+    container.innerHTML = html || '<div class="text-center py-4 text-slate-400">Aucune donnée</div>';
 }
 
 function renderCoursesGrid() {
