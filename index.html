@@ -3459,12 +3459,16 @@ async function renderTendanceGrid() {
     };
 
     const parentModules = ['Module Biologique', 'Module Pharmaceutique', 'Module Fondamental'];
-    const years = [...new Set(questions.map(q => q.year))].sort((a, b) => b - a);
+    const years = [...new Set(questions.map(q => q.year).filter(Boolean))].sort((a, b) => b - a);
     if (years.length === 0) for (let y = 2025; y >= 2018; y--) years.push(y);
 
-    const globalMaxCount = Math.max(1, ...questions.map(q => {
-        return questions.filter(q2 => q2.course === q.course && q2.year === q.year).length;
-    }));
+    const courseTotalCounts = {};
+    questions.forEach(q => {
+        const key = normalizeCourseName(q.course);
+        courseTotalCounts[key] = (courseTotalCounts[key] || 0) + 1;
+    });
+
+    const globalMaxCount = Math.max(1, ...Object.values(courseTotalCounts));
 
     let html = '';
 
@@ -3487,7 +3491,7 @@ async function renderTendanceGrid() {
                         courseYearCounts[q.year] = (courseYearCounts[q.year] || 0) + 1;
                     }
                 });
-                const total = years.reduce((sum, y) => sum + (courseYearCounts[y] || 0), 0);
+                const courseTotal = courseTotalCounts[normalizeCourseName(course)] || 0;
 
                 rowsHtml += `<tr class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30"><td class="py-2 px-3 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap" title="${course}"><span class="truncate block max-w-[200px]">${course}</span></td>`;
                 years.forEach(y => {
@@ -3501,8 +3505,8 @@ async function renderTendanceGrid() {
                     }
                     rowsHtml += `<td class="text-center py-2 px-2"><span class="inline-block px-2 py-1 rounded-lg text-xs ${color}">${count || '-'}</span></td>`;
                 });
-                const totalColor = total >= 10 ? 'text-red-600 dark:text-red-400 font-bold' : total >= 5 ? 'text-amber-600 dark:text-amber-400 font-semibold' : total > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-600';
-                rowsHtml += `<td class="text-center py-2 px-2"><span class="text-xs ${totalColor}">${total}</span></td></tr>`;
+                const totalColor = courseTotal >= 10 ? 'text-red-600 dark:text-red-400 font-bold' : courseTotal >= 5 ? 'text-amber-600 dark:text-amber-400 font-semibold' : courseTotal > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-600';
+                rowsHtml += `<td class="text-center py-2 px-2"><span class="text-xs ${totalColor} font-bold">${courseTotal}</span></td></tr>`;
             });
 
             moduleHtml += `<p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-3 mb-1 ml-1">${sub} <span class="text-slate-400 dark:text-slate-500">(${courses.length})</span></p>`;
