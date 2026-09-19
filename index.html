@@ -6883,10 +6883,10 @@ function filterQuestionsReview() {
                         ${validOptions.map((item, displayIdx) => {
                             const isCorrect = correctArray.includes(item.idx);
                             return `
-                            <div class="flex items-center gap-2 ${isCorrect ? 'text-green-600 font-medium' : 'text-slate-500'}">
-                                <span class="w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500 text-white' : 'bg-slate-200'} text-xs">${String.fromCharCode(65 + displayIdx)}</span>
+                            <div class="flex items-center gap-2 ${isCorrect ? 'text-green-600 font-medium' : 'text-red-500'}">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500 text-white' : 'bg-red-400 text-white'} text-xs">${String.fromCharCode(65 + displayIdx)}</span>
                                 ${item.opt}
-                                ${isCorrect ? '<i class="fas fa-check text-green-500"></i>' : ''}
+                                ${isCorrect ? '<i class="fas fa-check text-green-500"></i>' : '<i class="fas fa-times text-red-400"></i>'}
                             </div>`;
                         }).join('')}
                     </div>
