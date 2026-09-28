@@ -2843,6 +2843,7 @@ let trainingState = {
     submodule: null,
     course: null,
     year: null,
+    years: [],
     source: null
 };
 
@@ -3644,7 +3645,7 @@ function setMode(mode) {
     // Réinitialiser l'état selon le mode
     if (mode === 'training') {
         trainingStep = 'module';
-        trainingState = { module: null, submodule: null, course: null, year: null, source: null };
+        trainingState = { module: null, submodule: null, course: null, year: null, years: [], source: null };
         document.getElementById('simulation-filter-panel').classList.add('hidden');
         document.getElementById('courses-grid').innerHTML = '';
     } else {
@@ -3933,6 +3934,9 @@ async function renderTrainingFilterSelection() {
         availableSources = [...new Set(moduleQuestions.map(q => q.source))].sort();
     }
 
+    availableYears = (availableYears || []).filter(Boolean);
+    availableSources = [...new Set([...(availableSources || []), 'EMD', 'RESIDANAT', 'RATT'])].sort();
+
     panel.classList.remove('hidden');
     panel.innerHTML = `
         <div class="mb-4">
@@ -3942,24 +3946,41 @@ async function renderTrainingFilterSelection() {
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-600 mb-2">Année</label>
-                <select id="training-year-filter" onchange="updateTrainingFilters()" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">Toutes les années</option>
-                    ${availableYears.map(year => `<option value="${year}">${year}</option>`).join('')}
-                </select>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-600 mb-2">Années (sélection multiple)</label>
+                <div id="training-year-list" class="flex flex-wrap gap-2 mb-3">
+                    ${availableYears.length ? availableYears.map(year => `
+                        <label class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 cursor-pointer hover:border-teal-400 transition">
+                            <input type="checkbox" class="training-year-check rounded border-slate-300 text-teal-600 focus:ring-teal-500" value="${year}" onchange="updateTrainingFilters()">
+                            ${year}
+                        </label>`).join('') : '<span class="text-sm text-slate-400">Aucune année disponible</span>'}
+                </div>
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Année début</label>
+                        <input type="number" id="training-year-from" min="${availableYears[0] || 2018}" max="${availableYears[availableYears.length - 1] || 2026}" placeholder="ex : 2024" class="w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-teal-500 focus:ring-teal-500">
+                    </div>
+                    <span class="pb-2 text-slate-500 text-sm">à</span>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Année fin</label>
+                        <input type="number" id="training-year-to" min="${availableYears[0] || 2018}" max="${availableYears[availableYears.length - 1] || 2026}" placeholder="ex : 2026" class="w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-teal-500 focus:ring-teal-500">
+                    </div>
+                    <button type="button" onclick="applyTrainingYearInterval()" class="px-4 py-2 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm font-semibold hover:bg-teal-100 transition">Appliquer l'intervalle</button>
+                    <button type="button" onclick="clearTrainingYears()" class="px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-100 transition">Toutes les années</button>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Aucune case cochée = toutes les années.</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-600 mb-2">Source</label>
                 <select id="training-source-filter" onchange="updateTrainingFilters()" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Toutes les sources</option>
-                    ${availableSources.map(source => `<option value="${source}">${source}</option>`).join('')}
+                    ${availableSources.map(source => `<option value="${source}">${source === 'RATT' ? 'RATTAPAGE' : source}</option>`).join('')}
                 </select>
-            </div>
-            <div class="flex flex-col justify-end">
-                <button onclick="startTrainingQCM()" class="w-full px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-cyan-600 transition shadow-lg">
-                    <i class="fas fa-play mr-2"></i>Démarrer l'entraînement
-                </button>
+                <div class="flex flex-col justify-end mt-4">
+                    <button onclick="startTrainingQCM()" class="w-full px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-cyan-600 transition shadow-lg">
+                        <i class="fas fa-play mr-2"></i>Démarrer l'entraînement
+                    </button>
+                </div>
             </div>
         </div>
         <div class="mt-4 flex items-center gap-4">
@@ -3971,22 +3992,55 @@ async function renderTrainingFilterSelection() {
     await updateTrainingFilters();
 }
 
+function getSelectedTrainingYears() {
+    return Array.from(document.querySelectorAll('#training-year-list .training-year-check:checked')).map(i => Number(i.value));
+}
+
+function applyTrainingYearInterval() {
+    const from = parseInt(document.getElementById('training-year-from')?.value, 10);
+    const to = parseInt(document.getElementById('training-year-to')?.value, 10);
+    if (isNaN(from) || isNaN(to)) {
+        showToast('Indiquez une année de début et une année de fin.', 'error');
+        return;
+    }
+    const min = Math.min(from, to);
+    const max = Math.max(from, to);
+    let any = false;
+    document.querySelectorAll('#training-year-list .training-year-check').forEach(cb => {
+        const y = Number(cb.value);
+        cb.checked = y >= min && y <= max;
+        if (cb.checked) any = true;
+    });
+    if (!any) showToast('Aucune année disponible dans cet intervalle.', 'error');
+    updateTrainingFilters();
+}
+
+function clearTrainingYears() {
+    document.querySelectorAll('#training-year-list .training-year-check').forEach(cb => { cb.checked = false; });
+    const from = document.getElementById('training-year-from');
+    const to = document.getElementById('training-year-to');
+    if (from) from.value = '';
+    if (to) to.value = '';
+    updateTrainingFilters();
+}
+
 async function updateTrainingFilters() {
-    trainingState.year = document.getElementById('training-year-filter')?.value || null;
+    trainingState.years = getSelectedTrainingYears();
+    trainingState.year = trainingState.years.length === 1 ? String(trainingState.years[0]) : null;
     trainingState.source = document.getElementById('training-source-filter')?.value || null;
 
     let count;
     if (isSupabaseEnabled()) {
         const questions = await fetchSupabaseQuestions({
             courses: [trainingState.course],
-            years: trainingState.year ? [trainingState.year] : undefined,
+            years: trainingState.years.length ? trainingState.years : undefined,
             source: trainingState.source || undefined
         });
         count = questions.length;
     } else {
         count = mockQuestions.filter(q =>
             q.course === trainingState.course
-            && (!trainingState.year || q.year == trainingState.year)
+            && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
             && (!trainingState.source || q.source === trainingState.source)
         ).length;
     }
@@ -4021,13 +4075,13 @@ async function startTrainingQCM() {
     if (isSupabaseEnabled()) {
         currentQuestions = await fetchSupabaseQuestions({
             courses: [trainingState.course],
-            years: trainingState.year ? [trainingState.year] : undefined,
+            years: trainingState.years.length ? trainingState.years : undefined,
             source: trainingState.source || undefined
         });
     } else {
         currentQuestions = mockQuestions.filter(q =>
             q.course === trainingState.course
-            && (!trainingState.year || q.year == trainingState.year)
+            && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
             && (!trainingState.source || q.source === trainingState.source)
         );
     }
@@ -4050,7 +4104,9 @@ async function startTrainingQCM() {
     document.getElementById('courses-section').classList.add('hidden');
     document.getElementById('qcm-section').classList.remove('hidden');
     document.getElementById('qcm-course-title').textContent = trainingState.course;
-    document.getElementById('qcm-module-title').textContent = trainingState.module + (trainingState.year ? ` • ${trainingState.year}` : '') + (trainingState.source ? ` • ${trainingState.source}` : '');
+    const yearsLabel = trainingState.years && trainingState.years.length ? (trainingState.years.length <= 2 ? ` • ${trainingState.years.join(' & ')}` : ` • ${trainingState.years.length} années`) : '';
+    const sourceLabel = trainingState.source ? ` • ${trainingState.source === 'RATT' ? 'RATTAPAGE' : trainingState.source}` : '';
+    document.getElementById('qcm-module-title').textContent = trainingState.module + yearsLabel + sourceLabel;
 
     const timerContainer = document.getElementById('timer-container');
     timerContainer.classList.add('hidden');
