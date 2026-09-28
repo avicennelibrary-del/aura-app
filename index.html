@@ -3937,6 +3937,8 @@ async function renderTrainingFilterSelection() {
     availableYears = (availableYears || []).filter(Boolean);
     availableSources = [...new Set([...(availableSources || []), 'EMD', 'RESIDANAT', 'RATT'])].sort();
 
+    trainingState.years = [];
+
     panel.classList.remove('hidden');
     panel.innerHTML = `
         <div class="mb-4">
@@ -3948,12 +3950,19 @@ async function renderTrainingFilterSelection() {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-600 mb-2">Années (sélection multiple)</label>
-                <div id="training-year-list" class="flex flex-wrap gap-2 mb-3">
-                    ${availableYears.length ? availableYears.map(year => `
-                        <label class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 cursor-pointer hover:border-teal-400 transition">
-                            <input type="checkbox" class="training-year-check rounded border-slate-300 text-teal-600 focus:ring-teal-500" value="${year}" onchange="updateTrainingFilters()">
-                            ${year}
-                        </label>`).join('') : '<span class="text-sm text-slate-400">Aucune année disponible</span>'}
+                <div id="training-year-dropdown" class="relative mb-3">
+                    <button type="button" onclick="toggleTrainingYearDropdown(event)" class="w-full flex items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-sm text-slate-700 focus:border-teal-500 focus:ring-teal-500">
+                        <span id="training-year-dropdown-label" class="truncate">Toutes les années</span>
+                        <i class="fas fa-chevron-down text-slate-400"></i>
+                    </button>
+                    <div id="training-year-dropdown-menu" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                        ${availableYears.length ? availableYears.map(year => `
+                            <button type="button" data-year="${year}" onclick="toggleTrainingYear(${year})" class="training-year-item w-full flex items-center justify-between px-4 py-2.5 text-sm text-slate-700 hover:bg-teal-50 transition">
+                                <span>${year}</span>
+                                <i class="fas fa-check text-teal-600 training-year-check-icon hidden"></i>
+                            </button>`).join('') : '<div class="px-4 py-2.5 text-sm text-slate-400">Aucune année disponible</div>'}
+                        <button type="button" onclick="clearTrainingYears(event)" class="w-full border-t border-slate-100 px-4 py-2.5 text-left text-sm text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-infinity mr-2"></i>Toutes les années</button>
+                    </div>
                 </div>
                 <div class="flex flex-wrap items-end gap-2">
                     <div>
@@ -3965,10 +3974,9 @@ async function renderTrainingFilterSelection() {
                         <label class="block text-xs text-slate-500 mb-1">Année fin</label>
                         <input type="number" id="training-year-to" min="${availableYears[0] || 2018}" max="${availableYears[availableYears.length - 1] || 2026}" placeholder="ex : 2026" class="w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-teal-500 focus:ring-teal-500">
                     </div>
-                    <button type="button" onclick="applyTrainingYearInterval()" class="px-4 py-2 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm font-semibold hover:bg-teal-100 transition">Appliquer l'intervalle</button>
-                    <button type="button" onclick="clearTrainingYears()" class="px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-100 transition">Toutes les années</button>
+                    <button type="button" onclick="applyTrainingYearInterval(event)" class="px-4 py-2 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm font-semibold hover:bg-teal-100 transition">Appliquer l'intervalle</button>
                 </div>
-                <p class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Aucune case cochée = toutes les années.</p>
+                <p class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Aucune année sélectionnée = toutes les années.</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-600 mb-2">Source</label>
@@ -3992,11 +4000,47 @@ async function renderTrainingFilterSelection() {
     await updateTrainingFilters();
 }
 
-function getSelectedTrainingYears() {
-    return Array.from(document.querySelectorAll('#training-year-list .training-year-check:checked')).map(i => Number(i.value));
+function toggleTrainingYearDropdown(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('training-year-dropdown-menu');
+    if (menu) menu.classList.toggle('hidden');
 }
 
-function applyTrainingYearInterval() {
+function closeTrainingYearDropdown() {
+    const menu = document.getElementById('training-year-dropdown-menu');
+    if (menu) menu.classList.add('hidden');
+}
+
+function updateTrainingYearLabel() {
+    const label = document.getElementById('training-year-dropdown-label');
+    if (!label) return;
+    const years = trainingState.years || [];
+    label.textContent = years.length ? (years.length <= 4 ? years.join(', ') : `${years.length} années sélectionnées`) : 'Toutes les années';
+    label.className = years.length ? 'truncate text-teal-700 font-semibold' : 'truncate';
+    document.querySelectorAll('#training-year-dropdown-menu .training-year-item').forEach(item => {
+        const y = Number(item.getAttribute('data-year'));
+        const selected = years.includes(y);
+        item.classList.toggle('bg-teal-50', selected);
+        const icon = item.querySelector('.training-year-check-icon');
+        if (icon) icon.classList.toggle('hidden', !selected);
+    });
+}
+
+function toggleTrainingYear(year, e) {
+    if (e) e.stopPropagation();
+    year = Number(year);
+    const years = trainingState.years || [];
+    const idx = years.indexOf(year);
+    if (idx > -1) years.splice(idx, 1);
+    else years.push(year);
+    years.sort((a, b) => b - a);
+    trainingState.years = years;
+    updateTrainingYearLabel();
+    updateTrainingFilters();
+}
+
+function applyTrainingYearInterval(e) {
+    if (e) e.stopPropagation();
     const from = parseInt(document.getElementById('training-year-from')?.value, 10);
     const to = parseInt(document.getElementById('training-year-to')?.value, 10);
     if (isNaN(from) || isNaN(to)) {
@@ -4005,27 +4049,33 @@ function applyTrainingYearInterval() {
     }
     const min = Math.min(from, to);
     const max = Math.max(from, to);
-    let any = false;
-    document.querySelectorAll('#training-year-list .training-year-check').forEach(cb => {
-        const y = Number(cb.value);
-        cb.checked = y >= min && y <= max;
-        if (cb.checked) any = true;
-    });
-    if (!any) showToast('Aucune année disponible dans cet intervalle.', 'error');
+    const available = Array.from(document.querySelectorAll('#training-year-dropdown-menu .training-year-item'))
+        .map(item => Number(item.getAttribute('data-year')));
+    trainingState.years = available.filter(y => y >= min && y <= max).sort((a, b) => b - a);
+    if (!trainingState.years.length) showToast('Aucune année disponible dans cet intervalle.', 'error');
+    updateTrainingYearLabel();
     updateTrainingFilters();
 }
 
-function clearTrainingYears() {
-    document.querySelectorAll('#training-year-list .training-year-check').forEach(cb => { cb.checked = false; });
+function clearTrainingYears(e) {
+    if (e) e.stopPropagation();
+    trainingState.years = [];
     const from = document.getElementById('training-year-from');
     const to = document.getElementById('training-year-to');
     if (from) from.value = '';
     if (to) to.value = '';
+    updateTrainingYearLabel();
+    closeTrainingYearDropdown();
     updateTrainingFilters();
 }
 
+document.addEventListener('click', function(e) {
+    const dd = document.getElementById('training-year-dropdown');
+    if (dd && !dd.contains(e.target)) closeTrainingYearDropdown();
+});
+
 async function updateTrainingFilters() {
-    trainingState.years = getSelectedTrainingYears();
+    trainingState.years = trainingState.years || [];
     trainingState.year = trainingState.years.length === 1 ? String(trainingState.years[0]) : null;
     trainingState.source = document.getElementById('training-source-filter')?.value || null;
 
