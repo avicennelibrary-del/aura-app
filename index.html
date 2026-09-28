@@ -82,6 +82,7 @@
         .qcm-question-dot.answered { background: #0d9488; }
         .qcm-question-dot.current { background: #06b6d4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
         .qcm-question-dot.unanswered { background: #cbd5e1; }
+        .qcm-question-dot.skipped { background: #f59e0b; }
         .qcm-key-hint { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 700; color: #94a3b8; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #e2e8f0; pointer-events: none; opacity: 0.7; }
         .qcm-option:hover .qcm-key-hint { opacity: 1; color: #0d9488; border-color: #0d9488; }
         @keyframes optionPulse { 0% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); } 70% { box-shadow: 0 0 0 8px rgba(13,148,136,0); } 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0); } }
@@ -1317,11 +1318,14 @@
                     <!-- Vérifier : DIRECTEMENT sous les options -->
                     <div class="mt-4 text-center">
                         <button onclick="verifyAnswer()" id="btn-verify" class="qcm-verify-btn px-10 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed mx-auto"><i class="fas fa-check"></i><span id="btn-verify-text">Vérifier</span></button>
-                        <span id="keyboard-hint" class="text-[10px] text-slate-400 mt-1.5 block hidden md:block">Raccourci : <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">A-E</kbd> sélectionner · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">↵</kbd> valider</span>
+                        <span id="keyboard-hint" class="text-[10px] text-slate-400 mt-1.5 block hidden md:block">Raccourci : <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">A-E</kbd> sélectionner · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">↵</kbd> valider · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">S</kbd> passer</span>
                     </div>
                     <!-- Précédent : en bas à gauche, discrètement -->
                     <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-100">
-                        <button onclick="prevQuestion()" id="btn-prev" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-medium"><i class="fas fa-chevron-left text-[10px]"></i>Précédent</button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="prevQuestion()" id="btn-prev" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-medium"><i class="fas fa-chevron-left text-[10px]"></i>Précédent</button>
+                            <button onclick="skipQuestion()" id="btn-skip" class="hidden px-4 py-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition flex items-center gap-1.5 text-xs font-semibold"><i class="fas fa-forward text-[10px]"></i>Passer</button>
+                        </div>
                         <div id="btn-next-container" class="hidden">
                             <button onclick="nextQuestion()" id="btn-next" class="qcm-next-btn px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm">Question suivante<i class="fas fa-chevron-right text-xs"></i></button>
                         </div>
@@ -4878,9 +4882,10 @@ function renderQuestion() {
     // Live score
     const liveScore = document.getElementById('live-score');
     const liveScoreText = document.getElementById('live-score-text');
-    if (liveScore && liveScoreText && userAnswers.length > 0) {
-        const correct = userAnswers.filter(a => a.isCorrect).length;
-        liveScoreText.textContent = `${correct}/${userAnswers.length}`;
+    if (liveScore && liveScoreText && userAnswers.some(a => !a.skipped)) {
+        const answered = userAnswers.filter(a => !a.skipped);
+        const correct = answered.filter(a => a.isCorrect).length;
+        liveScoreText.textContent = `${correct}/${answered.length}`;
         liveScore.classList.remove('hidden');
     } else if (liveScore) {
         liveScore.classList.add('hidden');
@@ -4939,7 +4944,7 @@ function renderQuestion() {
 
     // Restaurer l'état si la question a déjà été répondue
     const prevAnswer = userAnswers.find(a => a.question === currentQuestionIndex);
-    if (prevAnswer) {
+    if (prevAnswer && !prevAnswer.skipped) {
         hasVerified = true;
         selectedOptions = [...prevAnswer.selected];
         q.correct.forEach(correctIdx => {
@@ -4965,6 +4970,11 @@ function renderQuestion() {
         if (aiBtn) aiBtn.classList.remove('hidden');
         showNextButton();
     }
+
+    // Bouton Passer : uniquement en mode entraînement et si la question n'est pas encore vérifiée
+    const skipBtn = document.getElementById('btn-skip');
+    if (skipBtn) skipBtn.classList.toggle('hidden', currentMode !== 'training' || hasVerified);
+
     renderQuestionNavigator();
 }
 
@@ -5190,6 +5200,12 @@ function verifyAnswer() {
     // Calcul du score selon le mode
     const scoreResult = calculateScore(selectedOptions, validCorrect, scoringMode);
 
+    // Si la question avait été passée, remplacer l'entrée "passée" par la vraie réponse
+    const existingIdx = userAnswers.findIndex(a => a.question === currentQuestionIndex);
+    if (existingIdx > -1 && userAnswers[existingIdx].skipped) {
+        userAnswers.splice(existingIdx, 1);
+    }
+
     userAnswers.push({ 
         question: currentQuestionIndex, 
         selected: [...selectedOptions], 
@@ -5274,6 +5290,30 @@ function nextQuestion() {
     }
 }
 
+// Passer la question sans répondre (mode entraînement)
+function skipQuestion() {
+    if (hasVerified) { nextQuestion(); return; }
+    const idx = currentQuestionIndex;
+    const q = currentQuestions[idx];
+    if (!q) return;
+    const existing = userAnswers.findIndex(a => a.question === idx);
+    if (existing > -1) {
+        if (!userAnswers[existing].skipped) return; // déjà répondue
+        userAnswers.splice(existing, 1);
+    }
+    userAnswers.push({
+        question: idx,
+        selected: [],
+        correct: q.correct,
+        score: 0,
+        isCorrect: false,
+        scorePercentage: 0,
+        skipped: true
+    });
+    renderQuestionNavigator();
+    nextQuestion();
+}
+
 // ==================== QUESTION NAVIGATOR ====================
 function renderQuestionNavigator() {
     const nav = document.getElementById('question-navigator');
@@ -5281,12 +5321,15 @@ function renderQuestionNavigator() {
     const maxDots = Math.min(currentQuestions.length, 50);
     let html = '';
     for (let i = 0; i < maxDots; i++) {
-        const isAnswered = userAnswers.some(a => a.question === i);
+        const entry = userAnswers.find(a => a.question === i);
+        const isAnswered = !!entry && !entry.skipped;
+        const isSkipped = !!entry && entry.skipped;
         const isCurrent = i === currentQuestionIndex;
         let cls = 'qcm-question-dot unanswered';
         if (isCurrent) cls = 'qcm-question-dot current';
         else if (isAnswered) cls = 'qcm-question-dot answered';
-        html += `<div class="${cls}" onclick="jumpToQuestion(${i})" title="Question ${i + 1}"></div>`;
+        else if (isSkipped) cls = 'qcm-question-dot skipped';
+        html += `<div class="${cls}" onclick="jumpToQuestion(${i})" title="Question ${i + 1}${isSkipped ? ' (passée)' : ''}"></div>`;
     }
     if (currentQuestions.length > 50) html += `<span class="text-xs text-slate-400">+${currentQuestions.length - 50}</span>`;
     nav.innerHTML = html;
@@ -5313,6 +5356,10 @@ function handleQCMKeyboard(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-verify');
             if (btn && !btn.disabled) verifyAnswer();
+        } else if (key === 'S') {
+            e.preventDefault();
+            const skipBtn = document.getElementById('btn-skip');
+            if (skipBtn && !skipBtn.classList.contains('hidden')) skipQuestion();
         }
     } else {
         if (key === 'ENTER' || key === 'ARROWRIGHT' || key === 'N') {
@@ -5452,7 +5499,8 @@ function finishSession() {
     const totalLabel = document.createElement('div');
     totalLabel.id = 'result-total-label';
     totalLabel.className = 'text-center text-xs text-slate-400 mt-4';
-    totalLabel.textContent = `${currentQuestions.length} question${currentQuestions.length > 1 ? 's' : ''}`;
+    const skippedCount = userAnswers.filter(a => a.skipped).length;
+    totalLabel.textContent = `${currentQuestions.length} question${currentQuestions.length > 1 ? 's' : ''}` + (skippedCount ? ` • ${skippedCount} passée${skippedCount > 1 ? 's' : ''}` : '');
     document.getElementById('result-time').parentElement.appendChild(totalLabel);
 }
 
@@ -5490,7 +5538,7 @@ function showReview() {
                             <div class="flex items-center gap-3 mb-3">
                                 <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">${qi + 1}</span>
                                 <span class="text-sm text-slate-500">${q.source || ''} ${q.year || ''}</span>
-                                ${answer ? `<span class="ml-auto text-sm font-semibold ${answer.isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}</span>` : '<span class="ml-auto text-sm text-slate-400">Non répondue</span>'}
+                                ${answer && answer.skipped ? '<span class="ml-auto text-sm font-semibold text-amber-600">↷ Passée</span>' : answer ? `<span class="ml-auto text-sm font-semibold ${answer.isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}</span>` : '<span class="ml-auto text-sm text-slate-400">Non répondue</span>'}
                             </div>
                             <p class="font-medium text-slate-900 mb-3">${q.q}</p>
                             <div class="space-y-2">
@@ -7908,7 +7956,7 @@ async function generateSuggestions() {
     const content = document.getElementById('ai-suggestions-content');
     const btn = content.nextElementSibling;
     const sessions = JSON.parse(localStorage.getItem('aura_sessions') || '[]');
-    const recentErrors = userAnswers.filter(a => !a.isCorrect).slice(-10);
+    const recentErrors = userAnswers.filter(a => !a.isCorrect && !a.skipped).slice(-10);
 
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
     content.innerHTML = '<div class="flex items-center gap-2 text-slate-400"><i class="fas fa-spinner fa-spin"></i> Analyse de vos performances...</div>';
