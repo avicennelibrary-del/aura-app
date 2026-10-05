@@ -2282,6 +2282,27 @@ function normalizeCourseName(s) {
     return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[''`]/g, "'").replace(/\s+/g, ' ').trim();
 }
 
+// Clé de comparaison insensible à la ponctuation / aux espaces
+function courseKey(s) {
+    return normalizeCourseName(s).replace(/[^a-z0-9]+/g, '');
+}
+
+// Compare deux noms de cours/module (égalité ou inclusion : "Analytique" ⊂ "Chimie analytique")
+function namesMatch(a, b) {
+    const x = courseKey(a), y = courseKey(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    const short = x.length <= y.length ? x : y;
+    const long = x.length <= y.length ? y : x;
+    return short.length >= 5 && long.includes(short);
+}
+
+// Une question correspond-elle à un cours/sous-module donné ?
+function questionMatchesCourse(q, name) {
+    if (!q) return false;
+    return namesMatch(q.course, name) || namesMatch(q.module, name);
+}
+
 function escAttr(s) {
     return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
@@ -2294,7 +2315,7 @@ function escapeHtml(s) {
 async function fetchSupabaseQuestions({ courses, years, source } = {}) {
     const mockFiltered = () => {
         if (!courses || !courses.length) return mockQuestions;
-        return mockQuestions.filter(q => courses.some(c => normalizeCourseName(q.course) === normalizeCourseName(c)));
+        return mockQuestions.filter(q => courses.some(c => questionMatchesCourse(q, c)));
     };
 
     if (!isSupabaseEnabled()) return mockFiltered();
@@ -2306,7 +2327,10 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
     try {
         let query = supabaseClient.from('questions').select('*');
         if (years && years.length) query = query.in('year', years.map(Number));
-        if (source) query = query.eq('source', source);
+        if (source) {
+            const srcList = Array.isArray(source) ? source : [source];
+            query = srcList.length > 1 ? query.in('source', srcList) : query.eq('source', srcList[0]);
+        }
         query = query.order('id');
         let allData = [];
         const pageSize = 1000;
@@ -2322,22 +2346,24 @@ async function fetchSupabaseQuestions({ courses, years, source } = {}) {
         }
         let filtered = allData;
         if (courses && courses.length) {
-            const normalizedCourses = courses.map(c => normalizeCourseName(c));
-            filtered = allData.filter(q => normalizedCourses.includes(normalizeCourseName(q.course)));
+            filtered = allData.filter(q => courses.some(c => questionMatchesCourse(q, c)));
         }
-        if (filtered.length > 0) {
-            const result = filtered.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
-            setQuestionsCache({ _key: cacheKey, _data: result });
-            return result;
-        }
-        console.warn('Supabase: 0 questions trouvées pour', courses, '→ fallback mock');
+        const result = filtered.map(q => ({ ...q, correct: normalizeOptions(q.correct), options: normalizeOptions(q.options) }));
+        if (result.length > 0) setQuestionsCache({ _key: cacheKey, _data: result });
+        return result;
     } catch (e) {
         console.warn('Supabase error, fallback mock:', e.message);
     }
     return mockFiltered();
 }
 
-const SOURCE_PRIORITY = { 'RESIDANAT': 0, 'EMD': 1, 'RATT': 2 };
+// "RATTAPAGE" peut être stocké 'RATT' ou 'RATTRAPAGE' selon les imports
+function sourceValues(src) {
+    if (!src) return null;
+    return String(src).toUpperCase().startsWith('RATT') ? ['RATT', 'RATTRAPAGE'] : [src];
+}
+
+const SOURCE_PRIORITY = { 'RESIDANAT': 0, 'EMD': 1, 'RATT': 2, 'RATTRAPAGE': 2 };
 function sortQuestionsByPriority(questions) {
     return questions.sort((a, b) => {
         const pa = SOURCE_PRIORITY[a.source] ?? 99;
@@ -3939,7 +3965,15 @@ async function renderTrainingFilterSelection() {
     }
 
     availableYears = (availableYears || []).filter(Boolean);
-    availableSources = [...new Set([...(availableSources || []), 'EMD', 'RESIDANAT', 'RATT'])].sort();
+    availableSources = (availableSources || []).filter(Boolean);
+    availableSources = [...new Set([...availableSources, 'EMD', 'RESIDANAT', 'RATTRAPAGE', 'RATT'])];
+    const seenSourceLabels = new Set();
+    availableSources = availableSources.filter(s => {
+        const label = String(s).toUpperCase().startsWith('RATT') ? 'RATTAPAGE' : s;
+        if (seenSourceLabels.has(label)) return false;
+        seenSourceLabels.add(label);
+        return true;
+    }).sort();
 
     trainingState.years = [];
 
@@ -3986,7 +4020,7 @@ async function renderTrainingFilterSelection() {
                 <label class="block text-sm font-medium text-slate-600 mb-2">Source</label>
                 <select id="training-source-filter" onchange="updateTrainingFilters()" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Toutes les sources</option>
-                    ${availableSources.map(source => `<option value="${source}">${source === 'RATT' ? 'RATTAPAGE' : source}</option>`).join('')}
+                    ${availableSources.map(source => `<option value="${source}">${String(source).toUpperCase().startsWith('RATT') ? 'RATTAPAGE' : source}</option>`).join('')}
                 </select>
                 <div class="flex flex-col justify-end mt-4">
                     <button onclick="startTrainingQCM()" class="w-full px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-cyan-600 transition shadow-lg">
@@ -4084,18 +4118,19 @@ async function updateTrainingFilters() {
     trainingState.source = document.getElementById('training-source-filter')?.value || null;
 
     let count;
+    const srcList = sourceValues(trainingState.source);
     if (isSupabaseEnabled()) {
         const questions = await fetchSupabaseQuestions({
             courses: [trainingState.course],
             years: trainingState.years.length ? trainingState.years : undefined,
-            source: trainingState.source || undefined
+            source: srcList || undefined
         });
         count = questions.length;
     } else {
         count = mockQuestions.filter(q =>
-            q.course === trainingState.course
+            questionMatchesCourse(q, trainingState.course)
             && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
-            && (!trainingState.source || q.source === trainingState.source)
+            && (!srcList || srcList.includes(q.source))
         ).length;
     }
 
@@ -4130,13 +4165,13 @@ async function startTrainingQCM() {
         currentQuestions = await fetchSupabaseQuestions({
             courses: [trainingState.course],
             years: trainingState.years.length ? trainingState.years : undefined,
-            source: trainingState.source || undefined
+            source: sourceValues(trainingState.source) || undefined
         });
     } else {
         currentQuestions = mockQuestions.filter(q =>
-            q.course === trainingState.course
+            questionMatchesCourse(q, trainingState.course)
             && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
-            && (!trainingState.source || q.source === trainingState.source)
+            && (!sourceValues(trainingState.source) || sourceValues(trainingState.source).includes(q.source))
         );
     }
     currentQuestions = sortQuestionsByPriority(currentQuestions);
@@ -4159,7 +4194,7 @@ async function startTrainingQCM() {
     document.getElementById('qcm-section').classList.remove('hidden');
     document.getElementById('qcm-course-title').textContent = trainingState.course;
     const yearsLabel = trainingState.years && trainingState.years.length ? (trainingState.years.length <= 2 ? ` • ${trainingState.years.join(' & ')}` : ` • ${trainingState.years.length} années`) : '';
-    const sourceLabel = trainingState.source ? ` • ${trainingState.source === 'RATT' ? 'RATTAPAGE' : trainingState.source}` : '';
+    const sourceLabel = trainingState.source ? ` • ${String(trainingState.source).toUpperCase().startsWith('RATT') ? 'RATTAPAGE' : trainingState.source}` : '';
     document.getElementById('qcm-module-title').textContent = trainingState.module + yearsLabel + sourceLabel;
 
     const timerContainer = document.getElementById('timer-container');
@@ -4297,10 +4332,10 @@ async function renderSimulationResidanatFilters() {
     let years;
     if (isSupabaseEnabled()) {
         const questions = await fetchSupabaseQuestions({ source: 'RESIDANAT' });
-        years = [...new Set(questions.map(q => q.year))].sort((a, b) => a - b);
+        years = [...new Set(questions.map(q => q.year))].filter(Boolean).sort((a, b) => a - b);
     } else {
         const residanatQuestions = mockQuestions.filter(q => q.source === 'RESIDANAT');
-        years = [...new Set(residanatQuestions.map(q => q.year))].sort((a, b) => a - b);
+        years = [...new Set(residanatQuestions.map(q => q.year))].filter(Boolean).sort((a, b) => a - b);
     }
 
     panel.classList.remove('hidden');
@@ -4434,7 +4469,7 @@ async function renderSimulationEMDFilters() {
         years = [...new Set(emdQuestions.map(q => q.year))].filter(Boolean).sort((a, b) => a - b);
     }
 
-    moduleCourses = moduleCourses.filter(c => emdQuestions.some(q => normalizeCourseName(q.course) === normalizeCourseName(c)));
+    moduleCourses = moduleCourses.filter(c => emdQuestions.some(q => questionMatchesCourse(q, c)));
     
     if (moduleCourses.length === 0) {
         showPanelMessage('fa-search', `Aucune question EMD trouvée pour le module "${currentModule}"`,
@@ -4445,11 +4480,11 @@ async function renderSimulationEMDFilters() {
     }
 
     console.log('Years found:', years);
-    console.log('EMD questions per course:', moduleCourses.map(c => `${c}: ${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(c)).length}`));
+    console.log('EMD questions per course:', moduleCourses.map(c => `${c}: ${emdQuestions.filter(q => questionMatchesCourse(q, c)).length}`));
 
     if (years.length === 0) {
         showPanelMessage('fa-calendar-times', `Aucune année disponible pour le module "${currentModule}"`,
-            `Questions trouvées : ${moduleCourses.map(c => `${c} (${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(c)).length})`).join(', ')}`);
+            `Questions trouvées : ${moduleCourses.map(c => `${c} (${emdQuestions.filter(q => questionMatchesCourse(q, c)).length})`).join(', ')}`);
         return;
     }
 
@@ -4467,7 +4502,7 @@ async function renderSimulationEMDFilters() {
                         <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition">
                             <input type="checkbox" value="${course}" class="emd-course h-4 w-4 text-blue-600 rounded" onchange="updateSimulationEMDSelection()">
                             <span class="text-slate-700 text-sm">${course}</span>
-                            <span class="ml-auto text-xs text-slate-400">${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(course)).length} QCM</span>
+                            <span class="ml-auto text-xs text-slate-400">${emdQuestions.filter(q => questionMatchesCourse(q, course)).length} QCM</span>
                         </label>
                     `).join('')}
                 </div>
@@ -4546,7 +4581,7 @@ async function updateSimulationEMDSelection() {
         count = questions.length;
     } else {
         count = mockQuestions.filter(q =>
-            simulationState.courses.some(c => normalizeCourseName(c) === normalizeCourseName(q.course))
+            simulationState.courses.some(c => questionMatchesCourse(q, c))
             && simulationState.years.includes(String(q.year))
             && q.source === 'EMD'
         ).length;
@@ -4587,7 +4622,7 @@ async function startSimulationEMD() {
     } else {
         console.log('Using mock questions...');
         currentQuestions = mockQuestions.filter(q =>
-            expandedCourses.some(c => normalizeCourseName(c) === normalizeCourseName(q.course))
+            expandedCourses.some(c => questionMatchesCourse(q, c))
             && simulationState.years.includes(String(q.year))
             && q.source === 'EMD'
         );
