@@ -4397,6 +4397,18 @@ async function renderSimulationEMDFilters() {
 
     coursesGrid.innerHTML = '';
 
+    const backToModuleBtn = `<button type="button" onclick="renderSimulationEMDModuleSelection()" class="mt-5 text-slate-600 hover:text-slate-900 flex items-center gap-2 font-medium mx-auto"><i class="fas fa-arrow-left"></i> Changer de module</button>`;
+    const showPanelMessage = (icon, title, detail) => {
+        panel.innerHTML = `<div class="text-center py-10 px-4">
+            <i class="fas ${icon} text-4xl text-amber-400 mb-3 block"></i>
+            <p class="font-medium text-slate-700">${title}</p>
+            ${detail ? `<p class="text-sm text-slate-500 mt-2">${detail}</p>` : ''}
+            ${backToModuleBtn}
+        </div>`;
+    };
+
+    panel.innerHTML = `<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i><p class="text-sm">Chargement des questions EMD...</p></div>`;
+
     let moduleCourses = coursesData[currentModule] || [];
     if (currentUser?.subscription_status === 'trial') {
         moduleCourses = moduleCourses.filter(c => TRIAL_FREE_COURSES.includes(c));
@@ -4404,7 +4416,7 @@ async function renderSimulationEMDFilters() {
     console.log('Module courses from coursesData:', moduleCourses);
     
     if (moduleCourses.length === 0) {
-        coursesGrid.innerHTML = '<div class="col-span-full text-center py-8 text-red-500">Aucune donnée de cours pour ce module</div>';
+        showPanelMessage('fa-folder-open', `Le module "${currentModule}" n'a pas de cours définis.`, 'Choisissez un autre module ou contactez le support.');
         return;
     }
 
@@ -4416,28 +4428,28 @@ async function renderSimulationEMDFilters() {
         if (emdQuestions.length > 0) {
             console.log('Sample question course:', emdQuestions[0].course);
         }
-        years = [...new Set(emdQuestions.map(q => q.year))].sort((a, b) => a - b);
+        years = [...new Set(emdQuestions.map(q => q.year))].filter(Boolean).sort((a, b) => a - b);
     } else {
         emdQuestions = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course)) && q.source === 'EMD');
-        years = [...new Set(emdQuestions.map(q => q.year))].sort((a, b) => a - b);
+        years = [...new Set(emdQuestions.map(q => q.year))].filter(Boolean).sort((a, b) => a - b);
     }
 
-    moduleCourses = moduleCourses.filter(c => emdQuestions.some(q => q.course === c));
+    moduleCourses = moduleCourses.filter(c => emdQuestions.some(q => normalizeCourseName(q.course) === normalizeCourseName(c)));
     
     if (moduleCourses.length === 0) {
-        coursesGrid.innerHTML = '<div class="col-span-full text-center py-8 text-red-500">Aucune question EMD trouvée pour ce module</div>';
+        showPanelMessage('fa-search', `Aucune question EMD trouvée pour le module "${currentModule}"`,
+            isSupabaseEnabled()
+                ? 'Importez des questions EMD (source = EMD) pour les cours de ce module, ou choisissez un autre module.'
+                : 'Mode démo actif : aucune question EMD en local. Connectez la base pour charger les QCM.');
         return;
     }
 
     console.log('Years found:', years);
-    console.log('EMD questions per course:', moduleCourses.map(c => `${c}: ${emdQuestions.filter(q => q.course === c).length}`));
+    console.log('EMD questions per course:', moduleCourses.map(c => `${c}: ${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(c)).length}`));
 
     if (years.length === 0) {
-        coursesGrid.innerHTML = `<div class="col-span-full text-center py-8 text-amber-500">
-            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-            <p class="font-medium">Aucune question EMD trouvée pour le module "${currentModule}"</p>
-            <p class="text-sm mt-2">Questions disponibles: ${moduleCourses.map(c => `${c} (${emdQuestions.filter(q => q.course === c).length})`).join(', ')}</p>
-        </div>`;
+        showPanelMessage('fa-calendar-times', `Aucune année disponible pour le module "${currentModule}"`,
+            `Questions trouvées : ${moduleCourses.map(c => `${c} (${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(c)).length})`).join(', ')}`);
         return;
     }
 
@@ -4455,7 +4467,7 @@ async function renderSimulationEMDFilters() {
                         <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition">
                             <input type="checkbox" value="${course}" class="emd-course h-4 w-4 text-blue-600 rounded" onchange="updateSimulationEMDSelection()">
                             <span class="text-slate-700 text-sm">${course}</span>
-                            <span class="ml-auto text-xs text-slate-400">${emdQuestions.filter(q => q.course === course).length} QCM</span>
+                            <span class="ml-auto text-xs text-slate-400">${emdQuestions.filter(q => normalizeCourseName(q.course) === normalizeCourseName(course)).length} QCM</span>
                         </label>
                     `).join('')}
                 </div>
@@ -4534,7 +4546,7 @@ async function updateSimulationEMDSelection() {
         count = questions.length;
     } else {
         count = mockQuestions.filter(q =>
-            simulationState.courses.includes(q.course)
+            simulationState.courses.some(c => normalizeCourseName(c) === normalizeCourseName(q.course))
             && simulationState.years.includes(String(q.year))
             && q.source === 'EMD'
         ).length;
@@ -4575,7 +4587,7 @@ async function startSimulationEMD() {
     } else {
         console.log('Using mock questions...');
         currentQuestions = mockQuestions.filter(q =>
-            expandedCourses.includes(q.course)
+            expandedCourses.some(c => normalizeCourseName(c) === normalizeCourseName(q.course))
             && simulationState.years.includes(String(q.year))
             && q.source === 'EMD'
         );
