@@ -2872,10 +2872,25 @@ let trainingState = {
     module: null,
     submodule: null,
     course: null,
+    courses: [],
     year: null,
     years: [],
     source: null
 };
+
+// Cours sélectionnés (plusieurs possibles à l'étape 3)
+function selectedTrainingCourses() {
+    if (trainingState.courses && trainingState.courses.length) return [...trainingState.courses];
+    return trainingState.course ? [trainingState.course] : [];
+}
+
+function trainingCoursesLabel() {
+    const list = selectedTrainingCourses();
+    if (!list.length) return '';
+    if (list.length === 1) return list[0];
+    if (list.length === 2) return list.join(' + ');
+    return `${list.length} cours (${list[0]}…)`;
+}
 
 // MODE SIMULATION : Structure avec deux branches
 let simulationBranch = null; // 'emd' ou 'residanat'
@@ -3675,7 +3690,7 @@ function setMode(mode) {
     // Réinitialiser l'état selon le mode
     if (mode === 'training') {
         trainingStep = 'module';
-        trainingState = { module: null, submodule: null, course: null, year: null, years: [], source: null };
+        trainingState = { module: null, submodule: null, course: null, courses: [], year: null, years: [], source: null };
         document.getElementById('simulation-filter-panel').classList.add('hidden');
         document.getElementById('courses-grid').innerHTML = '';
     } else {
@@ -3850,6 +3865,10 @@ function renderTrainingModuleSelection() {
 
 async function selectTrainingModule(module) {
     trainingState.module = module;
+    trainingState.submodule = null;
+    trainingState.course = null;
+    trainingState.courses = [];
+    trainingCourseSearch = '';
     currentModule = module;
     trainingStep = 'submodule';
 
@@ -3884,21 +3903,27 @@ function renderTrainingSubModuleSelection() {
 
 async function selectTrainingSubModule(submodule) {
     trainingState.submodule = submodule;
+    trainingState.course = null;
+    trainingState.courses = [];
+    trainingCourseSearch = '';
     currentModule = submodule;
     trainingStep = 'course';
     await renderTrainingStep();
 }
 
+let trainingCourseSearch = '';
+
 async function renderTrainingCourseSelection() {
     const coursesGrid = document.getElementById('courses-grid');
     const subCourses = coursesData[trainingState.submodule] || [];
     const moduleTitle = document.getElementById('current-module-title');
-    moduleTitle.textContent = `${trainingState.module} > ${trainingState.submodule} — Étape 3 : Choisissez un cours`;
+    moduleTitle.textContent = `${trainingState.module} > ${trainingState.submodule} — Étape 3 : Choisissez un ou plusieurs cours`;
 
     document.getElementById('simulation-filter-panel').classList.add('hidden');
-    const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un cours..." oninput="filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
+    const searchHtml = `<div class="col-span-full mb-4"><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="training-search" type="text" placeholder="Rechercher un cours..." value="${escapeHtml(trainingCourseSearch)}" oninput="trainingCourseSearch=this.value; filterTrainingCards(this.value)" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"></div></div>`;
     const isTrial = currentUser?.subscription_status === 'trial';
-    coursesGrid.innerHTML = searchHtml + subCourses.map((course, idx) => {
+    const selected = selectedTrainingCourses();
+    const cards = subCourses.map((course, idx) => {
         const locked = isTrial && !TRIAL_FREE_COURSES.includes(course);
         if (locked) {
             return `
@@ -3915,31 +3940,70 @@ async function renderTrainingCourseSelection() {
                     </div>
                     <h3 class="text-lg font-bold text-slate-900 mb-2">${course}</h3>
                     <p class="text-sm text-slate-600 mb-4">Cours du module ${trainingState.submodule}</p>
-                    <div class="flex items-center justify-between text-sm text-slate-500">
-                        <span><i class="fas fa-question-circle mr-1"></i>Commencer les QCM</span>
-                        <span><i class="fas fa-arrow-right"></i></span>
-                    </div>
                 </div>`;
         }
+        const isSel = selected.includes(course);
         return `
-        <div onclick="selectTrainingCourse('${escAttr(course)}')" class="training-card bg-white rounded-xl shadow-sm border border-slate-100 p-6 card-hover cursor-pointer fade-in" data-search="${course.toLowerCase()}">
+        <div onclick="toggleTrainingCourse('${escAttr(course)}')" class="training-card bg-white rounded-xl shadow-sm p-6 cursor-pointer fade-in ${isSel ? 'border-2 border-teal-400 ring-2 ring-teal-100 bg-teal-50/40' : 'border border-slate-100 card-hover'}" data-search="${course.toLowerCase()}">
             <div class="flex items-start justify-between mb-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-book"></i></div>
-                <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">Étape 3/4</span>
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg ${isSel ? 'bg-gradient-to-br from-teal-500 to-cyan-500' : 'bg-gradient-to-br from-emerald-500 to-teal-600'}">${isSel ? '<i class="fas fa-check"></i>' : '<i class="fas fa-book"></i>'}</div>
+                ${isSel
+                    ? '<span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Sélectionné</span>'
+                    : '<span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">Étape 3/4</span>'}
             </div>
             <h3 class="text-lg font-bold text-slate-900 mb-2">${course}</h3>
             <p class="text-sm text-slate-600 mb-4">Cours du module ${trainingState.submodule}</p>
             <div class="flex items-center justify-between text-sm text-slate-500">
-                <span><i class="fas fa-question-circle mr-1"></i>Commencer les QCM</span>
-                <span><i class="fas fa-arrow-right"></i></span>
+                <span><i class="fas fa-plus-circle mr-1"></i>${isSel ? 'Retirer de la sélection' : 'Ajouter à la sélection'}</span>
+                <span>${isSel ? '<i class="fas fa-times"></i>' : '<i class="fas fa-plus"></i>'}</span>
             </div>
         </div>`;
     }).join('');
+
+    const footer = `
+        <div class="col-span-full bg-white border border-teal-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-md fade-in">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm font-medium text-slate-600"><span class="text-teal-600 font-bold">${selected.length}</span> sélectionné(s) sur ${subCourses.length}</span>
+                <button type="button" onclick="selectAllTrainingCourses(true)" class="text-xs font-medium text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition">Tout sélectionner</button>
+                <button type="button" onclick="selectAllTrainingCourses(false)" class="text-xs font-medium text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition">Tout effacer</button>
+            </div>
+            <button type="button" onclick="confirmTrainingCourses()" class="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-cyan-600 transition shadow-lg flex items-center gap-2">
+                Continuer <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>`;
+    coursesGrid.innerHTML = searchHtml + cards + footer;
+    filterTrainingCards(trainingCourseSearch);
 }
 
-async function selectTrainingCourse(course) {
-    trainingState.course = course;
-    currentCourse = course;
+function toggleTrainingCourse(course) {
+    trainingState.courses = selectedTrainingCourses();
+    const i = trainingState.courses.indexOf(course);
+    if (i > -1) trainingState.courses.splice(i, 1);
+    else trainingState.courses.push(course);
+    trainingState.course = null;
+    renderTrainingCourseSelection();
+}
+
+function selectTrainingCourse(course) { toggleTrainingCourse(course); }
+
+function selectAllTrainingCourses(all) {
+    const subCourses = coursesData[trainingState.submodule] || [];
+    const isTrial = currentUser?.subscription_status === 'trial';
+    trainingState.courses = all
+        ? subCourses.filter(c => !isTrial || TRIAL_FREE_COURSES.includes(c))
+        : [];
+    trainingState.course = null;
+    renderTrainingCourseSelection();
+}
+
+async function confirmTrainingCourses() {
+    const sel = selectedTrainingCourses();
+    if (!sel.length) {
+        showToast('Sélectionnez au moins un cours', 'error');
+        return;
+    }
+    trainingState.courses = sel;
+    trainingState.course = sel.length === 1 ? sel[0] : trainingCoursesLabel();
     trainingStep = 'filters';
     await renderTrainingStep();
 }
@@ -3948,18 +4012,18 @@ async function renderTrainingFilterSelection() {
     const panel = document.getElementById('simulation-filter-panel');
     const coursesGrid = document.getElementById('courses-grid');
     const moduleTitle = document.getElementById('current-module-title');
-    moduleTitle.textContent = `${trainingState.module} > ${trainingState.submodule} > ${trainingState.course} — Étape 4 : Filtres`;
+    moduleTitle.textContent = `${trainingState.module} > ${trainingState.submodule} > ${trainingCoursesLabel()} — Étape 4 : Filtres`;
 
     coursesGrid.innerHTML = '';
 
-    const moduleCourses = [trainingState.course];
+    const moduleCourses = selectedTrainingCourses();
     let availableYears, availableSources;
     if (isSupabaseEnabled()) {
         const questions = await fetchSupabaseQuestions({ courses: moduleCourses });
         availableYears = [...new Set(questions.map(q => q.year))].sort((a, b) => a - b);
         availableSources = [...new Set(questions.map(q => q.source))].sort();
     } else {
-        const moduleQuestions = mockQuestions.filter(q => moduleCourses.some(mc => normalizeCourseName(mc) === normalizeCourseName(q.course)));
+        const moduleQuestions = mockQuestions.filter(q => moduleCourses.some(mc => questionMatchesCourse(q, mc)));
         availableYears = [...new Set(moduleQuestions.map(q => q.year))].sort((a, b) => a - b);
         availableSources = [...new Set(moduleQuestions.map(q => q.source))].sort();
     }
@@ -3982,7 +4046,7 @@ async function renderTrainingFilterSelection() {
         <div class="mb-4">
             <div class="flex items-center gap-2 mb-4">
                 <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">Module: ${trainingState.submodule}</span>
-                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">Cours: ${trainingState.course}</span>
+                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold max-w-[260px] truncate" title="${escapeHtml(trainingCoursesLabel())}">Cours: ${trainingCoursesLabel()}</span>
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -4119,16 +4183,17 @@ async function updateTrainingFilters() {
 
     let count;
     const srcList = sourceValues(trainingState.source);
+    const coursesList = selectedTrainingCourses();
     if (isSupabaseEnabled()) {
         const questions = await fetchSupabaseQuestions({
-            courses: [trainingState.course],
+            courses: coursesList,
             years: trainingState.years.length ? trainingState.years : undefined,
             source: srcList || undefined
         });
         count = questions.length;
     } else {
         count = mockQuestions.filter(q =>
-            questionMatchesCourse(q, trainingState.course)
+            coursesList.some(c => questionMatchesCourse(q, c))
             && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
             && (!srcList || srcList.includes(q.source))
         ).length;
@@ -4150,6 +4215,8 @@ async function goBackTrainingStep() {
     } else if (trainingStep === 'course') {
         trainingStep = 'submodule';
         trainingState.submodule = null;
+        trainingState.course = null;
+        trainingState.courses = [];
         await renderTrainingStep();
     } else if (trainingStep === 'filters') {
         trainingStep = 'course';
@@ -4161,15 +4228,16 @@ async function goBackTrainingStep() {
 async function startTrainingQCM() {
     await updateTrainingFilters();
 
+    const coursesList = selectedTrainingCourses();
     if (isSupabaseEnabled()) {
         currentQuestions = await fetchSupabaseQuestions({
-            courses: [trainingState.course],
+            courses: coursesList,
             years: trainingState.years.length ? trainingState.years : undefined,
             source: sourceValues(trainingState.source) || undefined
         });
     } else {
         currentQuestions = mockQuestions.filter(q =>
-            questionMatchesCourse(q, trainingState.course)
+            coursesList.some(c => questionMatchesCourse(q, c))
             && (!trainingState.years.length || trainingState.years.includes(Number(q.year)))
             && (!sourceValues(trainingState.source) || sourceValues(trainingState.source).includes(q.source))
         );
@@ -4192,7 +4260,7 @@ async function startTrainingQCM() {
     document.getElementById('simulation-filter-panel').classList.add('hidden');
     document.getElementById('courses-section').classList.add('hidden');
     document.getElementById('qcm-section').classList.remove('hidden');
-    document.getElementById('qcm-course-title').textContent = trainingState.course;
+    document.getElementById('qcm-course-title').textContent = trainingCoursesLabel();
     const yearsLabel = trainingState.years && trainingState.years.length ? (trainingState.years.length <= 2 ? ` • ${trainingState.years.join(' & ')}` : ` • ${trainingState.years.length} années`) : '';
     const sourceLabel = trainingState.source ? ` • ${String(trainingState.source).toUpperCase().startsWith('RATT') ? 'RATTAPAGE' : trainingState.source}` : '';
     document.getElementById('qcm-module-title').textContent = trainingState.module + yearsLabel + sourceLabel;
@@ -4748,6 +4816,7 @@ function openLessonForCurrentQuestion() {
         trainingState.module = parentModule;
         trainingState.submodule = courseName;
         trainingState.course = courseName;
+        trainingState.courses = [courseName];
         currentModule = courseName;
         trainingStep = 'filters';
         backToCourses();
