@@ -2855,6 +2855,10 @@ let currentModule = null;
 let currentCourse = null;
 let currentMode = 'training';
 let currentQuestions = [];
+
+// Session d'entraînement mémorisée pour reprise après changement de vue/mode
+let trainingSessionSnapshot = null;
+let suppressTrainingSave = false;
 let currentQuestionIndex = 0;
 let selectedOptions = []; // TABLEAU pour réponses multiples
 let userAnswers = [];
@@ -2891,6 +2895,9 @@ function trainingCoursesLabel() {
     if (list.length === 2) return list.join(' + ');
     return `${list.length} cours (${list[0]}…)`;
 }
+
+// Recherche en cours dans la sélection des cours (étape 3)
+let trainingCourseSearch = '';
 
 // MODE SIMULATION : Structure avec deux branches
 let simulationBranch = null; // 'emd' ou 'residanat'
@@ -3258,7 +3265,7 @@ function checkStudentNotifications() {
         }
     } catch(e) {}
 }
-async function showModules() { hideAllStudent(); document.getElementById('modules-section').classList.remove('hidden'); await renderModules(); }
+async function showModules() { if (restoreTrainingSessionView()) return; hideAllStudent(); document.getElementById('modules-section').classList.remove('hidden'); await renderModules(); }
 function showStats() { hideAllStudent(); document.getElementById('stats-section').classList.remove('hidden'); renderStats(); }
 
 // ==================== PLANNING ====================
@@ -3677,12 +3684,65 @@ function setActiveSidebar(view) {
     });
 }
 
+// ==================== SESSION D'ENTRAÎNEMENT NON INTERROMPUE ====================
+// On quitte le mode Entraînement (Simulation, Stats, Tableau de bord…) : la session
+// QCM en cours est mémorisée et reprise automatiquement au retour.
+function isTrainingViewActive() {
+    const qcm = document.getElementById('qcm-section');
+    const res = document.getElementById('results-section');
+    if (currentMode !== 'training' || !qcm) return false;
+    if (!qcm.classList.contains('hidden')) return true;
+    return !!(res && !res.classList.contains('hidden'));
+}
+
+function saveTrainingSessionView() {
+    if (suppressTrainingSave) return false;
+    if (!isTrainingViewActive()) return false;
+    const qcm = document.getElementById('qcm-section');
+    trainingSessionSnapshot = {
+        view: !qcm.classList.contains('hidden') ? 'qcm' : 'results',
+        questionsRef: currentQuestions,
+        trainingState: { ...trainingState, courses: [...(trainingState.courses || [])], years: [...(trainingState.years || [])] },
+        trainingStep,
+        trainingCourseSearch,
+        currentModule,
+        currentCourse
+    };
+    return true;
+}
+
+function restoreTrainingSessionView() {
+    if (!trainingSessionSnapshot || currentMode !== 'training') return false;
+    const snap = trainingSessionSnapshot;
+    // Une nouvelle session a été lancée entre-temps : la sauvegarde est obsolète
+    if (snap.questionsRef !== currentQuestions) { trainingSessionSnapshot = null; return false; }
+    trainingSessionSnapshot = null;
+    trainingState = snap.trainingState;
+    trainingStep = snap.trainingStep;
+    trainingCourseSearch = snap.trainingCourseSearch;
+    currentModule = snap.currentModule;
+    currentCourse = snap.currentCourse;
+    suppressTrainingSave = true;
+    hideAllStudent();
+    const target = snap.view === 'results' ? document.getElementById('results-section') : document.getElementById('qcm-section');
+    if (target) target.classList.remove('hidden');
+    suppressTrainingSave = false;
+    showToast('Session d\'entraînement reprise', 'success');
+    return true;
+}
+
+function clearTrainingSessionView() {
+    trainingSessionSnapshot = null;
+}
+
 function hideAllStudent() {
+    saveTrainingSessionView();
     ['dash-home', 'modules-section', 'courses-section', 'qcm-section', 'results-section', 'stats-section', 'planning-section', 'playlists-section', 'profile-section', 'flashcard-section', 'ai-assistant-section']
         .forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
 }
 
 function setMode(mode) {
+    saveTrainingSessionView();
     currentMode = mode;
     document.getElementById('btn-training').className = mode === 'training' ? 'px-6 py-2.5 rounded-lg bg-teal-50 text-teal-700 font-semibold border-2 border-teal-200 transition' : 'px-6 py-2.5 rounded-lg text-slate-600 font-semibold border-2 border-transparent hover:bg-slate-50 transition';
     document.getElementById('btn-simulation').className = mode === 'simulation' ? 'px-6 py-2.5 rounded-lg bg-cyan-50 text-cyan-700 font-semibold border-2 border-cyan-200 transition' : 'px-6 py-2.5 rounded-lg text-slate-600 font-semibold border-2 border-transparent hover:bg-slate-50 transition';
@@ -3910,8 +3970,6 @@ async function selectTrainingSubModule(submodule) {
     trainingStep = 'course';
     await renderTrainingStep();
 }
-
-let trainingCourseSearch = '';
 
 async function renderTrainingCourseSelection() {
     const coursesGrid = document.getElementById('courses-grid');
@@ -4832,6 +4890,7 @@ function openLessonForCurrentQuestion() {
 
 async function backToCourses() {
     clearInterval(timerInterval);
+    if (currentMode === 'training') clearTrainingSessionView();
     document.getElementById('qcm-section').classList.add('hidden');
     document.getElementById('results-section').classList.add('hidden');
 
@@ -5799,7 +5858,7 @@ function restartSession() {
     }
 }
 
-function startQuickSession(mode) { currentMode = mode; setMode(mode); showModules(); }
+function startQuickSession(mode) { clearTrainingSessionView(); currentMode = mode; setMode(mode); showModules(); }
 
 // ==================== MODE ALÉATOIRE ====================
 async function startRandomSession() {
@@ -5811,7 +5870,7 @@ async function startRandomSession() {
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
         hasVerified = false; scoringMode = 'all'; sessionTimeLimit = 0;
-        hideAllStudent(); document.getElementById('qcm-section').classList.remove('hidden');
+        hideAllStudent(); clearTrainingSessionView(); document.getElementById('qcm-section').classList.remove('hidden');
         document.getElementById('qcm-course-title').textContent = 'Mode Aléatoire';
         document.getElementById('qcm-module-title').textContent = 'Tous modules • Questions aléatoires';
         const timerContainer = document.getElementById('timer-container');
@@ -5828,7 +5887,7 @@ currentQuestions = sortQuestionsByPriority(data.map(q => ({ ...q, correct: norma
         currentQuestionIndex = 0; selectedOptions = []; userAnswers = [];
         sessionStats = { correct: 0, total: currentQuestions.length, scoreDetails: [] };
         hasVerified = false; scoringMode = 'all'; sessionTimeLimit = 0;
-        hideAllStudent(); document.getElementById('qcm-section').classList.remove('hidden');
+        hideAllStudent(); clearTrainingSessionView(); document.getElementById('qcm-section').classList.remove('hidden');
         document.getElementById('qcm-course-title').textContent = 'Mode Aléatoire';
         document.getElementById('qcm-module-title').textContent = 'Tous modules • Questions aléatoires';
         const timerContainer = document.getElementById('timer-container');
@@ -6187,6 +6246,7 @@ function startPlaylistQuiz(courses) {
             hasVerified = false;
             scoringMode = 'all';
             hideAllStudent();
+            clearTrainingSessionView();
             document.getElementById('qcm-section').classList.remove('hidden');
             document.getElementById('qcm-course-title').textContent = 'Playlist';
             document.getElementById('qcm-module-title').textContent = courses.join(' • ');
@@ -6211,6 +6271,7 @@ function startPlaylistQuiz(courses) {
         hasVerified = false;
         scoringMode = 'all';
         hideAllStudent();
+        clearTrainingSessionView();
         document.getElementById('qcm-section').classList.remove('hidden');
         document.getElementById('qcm-course-title').textContent = 'Playlist';
         document.getElementById('qcm-module-title').textContent = courses.join(' • ');
@@ -8148,6 +8209,7 @@ Exemple de format attendu :
             scoringMode = 'all';
             sessionTimeLimit = 0;
             hideAllStudent();
+            clearTrainingSessionView();
             document.getElementById('qcm-section').classList.remove('hidden');
             document.getElementById('qcm-course-title').textContent = 'IA - ' + topic;
             document.getElementById('qcm-module-title').textContent = 'Questions générées par intelligence artificielle';
@@ -8173,6 +8235,7 @@ Exemple de format attendu :
     scoringMode = 'all';
     sessionTimeLimit = 0;
     hideAllStudent();
+    clearTrainingSessionView();
     document.getElementById('qcm-section').classList.remove('hidden');
     document.getElementById('qcm-course-title').textContent = 'IA - ' + topic;
     document.getElementById('qcm-module-title').textContent = 'Questions générées localement (API indisponible)';
