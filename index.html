@@ -4,8 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AURA - Académie Universitaire de Révision Avancée</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23059669'/%3E%3Cstop offset='100%25' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='60' cy='60' r='56' fill='%230f172a'/%3E%3Ccircle cx='60' cy='52' r='18' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Crect x='55' y='34' width='10' height='8' rx='2' fill='url(%23g)'/%3E%3Ccircle cx='60' cy='52' r='6' fill='url(%23g)' opacity='0.8'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23006863'/%3E%3Cstop offset='100%25' stop-color='%23001F5B'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='60' cy='60' r='56' fill='%23001F5B'/%3E%3Ccircle cx='60' cy='52' r='18' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Crect x='55' y='34' width='10' height='8' rx='2' fill='url(%23g)'/%3E%3Ccircle cx='60' cy='52' r='6' fill='url(%23g)' opacity='0.8'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com?v=2"></script>
+    <script>
+        // ===== PALETTE AURA =====
+        // Bleu Royal #001F5B · Sarcelle #006863 · Ambre Doré #F29E2E
+        // Gris Moyen #BA8D8F · Gris Foncé #4A4A4A · Blanc #FFFFFF
+        if (window.tailwind) {
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {"50":"#FAFBFD","100":"#F1F4F8","200":"#E2E7EE","300":"#CFD5DF","400":"#BA8D8F","500":"#8C6B6C","600":"#6E6E6E","700":"#4A4A4A","800":"#2A3450","900":"#001F5B","950":"#001235"},
+                        gray: {"50":"#FAFBFD","100":"#F1F4F8","200":"#E2E7EE","300":"#CFD5DF","400":"#BA8D8F","500":"#8C6B6C","600":"#6E6E6E","700":"#4A4A4A","800":"#2A3450","900":"#001F5B","950":"#001235"},
+                        zinc: {"50":"#FAFBFD","100":"#F1F4F8","200":"#E2E7EE","300":"#CFD5DF","400":"#BA8D8F","500":"#8C6B6C","600":"#6E6E6E","700":"#4A4A4A","800":"#2A3450","900":"#001F5B","950":"#001235"},
+                        neutral: {"50":"#FAFBFD","100":"#F1F4F8","200":"#E2E7EE","300":"#CFD5DF","400":"#BA8D8F","500":"#8C6B6C","600":"#6E6E6E","700":"#4A4A4A","800":"#2A3450","900":"#001F5B","950":"#001235"},
+                        stone: {"50":"#FAFBFD","100":"#F1F4F8","200":"#E2E7EE","300":"#CFD5DF","400":"#BA8D8F","500":"#8C6B6C","600":"#6E6E6E","700":"#4A4A4A","800":"#2A3450","900":"#001F5B","950":"#001235"},
+                        blue: {"50":"#E9EDF7","100":"#D3DBF0","200":"#A8B6E1","300":"#7C8FCC","400":"#5668B4","500":"#34499A","600":"#001F5B","700":"#001B50","800":"#001745","900":"#001136","950":"#000B26"},
+                        indigo: {"50":"#E9EDF7","100":"#D3DBF0","200":"#A8B6E1","300":"#7C8FCC","400":"#5668B4","500":"#34499A","600":"#001F5B","700":"#001B50","800":"#001745","900":"#001136","950":"#000B26"},
+                        violet: {"50":"#E9EDF7","100":"#D3DBF0","200":"#A8B6E1","300":"#7C8FCC","400":"#5668B4","500":"#34499A","600":"#001F5B","700":"#001B50","800":"#001745","900":"#001136","950":"#000B26"},
+                        purple: {"50":"#E9EDF7","100":"#D3DBF0","200":"#A8B6E1","300":"#7C8FCC","400":"#5668B4","500":"#34499A","600":"#001F5B","700":"#001B50","800":"#001745","900":"#001136","950":"#000B26"},
+                        teal: {"50":"#E6F2F1","100":"#C2E1DE","200":"#8FC9C6","300":"#5CAEA9","400":"#2E8E8A","500":"#137A76","600":"#006863","700":"#005B57","800":"#004E4A","900":"#003F3C","950":"#002B29"},
+                        cyan: {"50":"#E6F2F1","100":"#C2E1DE","200":"#8FC9C6","300":"#5CAEA9","400":"#2E8E8A","500":"#137A76","600":"#006863","700":"#005B57","800":"#004E4A","900":"#003F3C","950":"#002B29"},
+                        emerald: {"50":"#E6F2F1","100":"#C2E1DE","200":"#8FC9C6","300":"#5CAEA9","400":"#2E8E8A","500":"#137A76","600":"#006863","700":"#005B57","800":"#004E4A","900":"#003F3C","950":"#002B29"},
+                        green: {"50":"#E6F2F1","100":"#C2E1DE","200":"#8FC9C6","300":"#5CAEA9","400":"#2E8E8A","500":"#137A76","600":"#006863","700":"#005B57","800":"#004E4A","900":"#003F3C","950":"#002B29"},
+                        sky: {"50":"#E6F2F1","100":"#C2E1DE","200":"#8FC9C6","300":"#5CAEA9","400":"#2E8E8A","500":"#137A76","600":"#006863","700":"#005B57","800":"#004E4A","900":"#003F3C","950":"#002B29"},
+                        amber: {"50":"#FEF6EC","100":"#FCE9CE","200":"#F9D6A3","300":"#F6C279","400":"#F3AE4E","500":"#F29E2E","600":"#DC8A19","700":"#B87210","800":"#945B0D","900":"#77490B","950":"#57350A"},
+                        yellow: {"50":"#FEF6EC","100":"#FCE9CE","200":"#F9D6A3","300":"#F6C279","400":"#F3AE4E","500":"#F29E2E","600":"#DC8A19","700":"#B87210","800":"#945B0D","900":"#77490B","950":"#57350A"},
+                        orange: {"50":"#FEF6EC","100":"#FCE9CE","200":"#F9D6A3","300":"#F6C279","400":"#F3AE4E","500":"#F29E2E","600":"#DC8A19","700":"#B87210","800":"#945B0D","900":"#77490B","950":"#57350A"},
+                        rose: {"50":"#FCF3F3","100":"#F9E7E7","200":"#F2D0D0","300":"#E7B7B7","400":"#C99899","500":"#BA8D8F","600":"#9A6E6F","700":"#7E5556","800":"#654243","900":"#4E3233","950":"#372223"},
+                        red: {"50":"#FCF3F3","100":"#F9E7E7","200":"#F2D0D0","300":"#E7B7B7","400":"#C99899","500":"#BA8D8F","600":"#9A6E6F","700":"#7E5556","800":"#654243","900":"#4E3233","950":"#372223"},
+                        pink: {"50":"#FCF3F3","100":"#F9E7E7","200":"#F2D0D0","300":"#E7B7B7","400":"#C99899","500":"#BA8D8F","600":"#9A6E6F","700":"#7E5556","800":"#654243","900":"#4E3233","950":"#372223"}
+                    }
+                }
+            }
+        };
+        }
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
@@ -19,56 +55,56 @@
         /* Better touch targets */
         input, select, textarea { font-size: 16px !important; } /* Prevents zoom on iOS */
         .font-display { font-family: 'Playfair Display', serif; }
-        .gradient-aura { background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); }
-        .gradient-dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gradient-aura { background: linear-gradient(135deg, #006863 0%, #137A76 100%); }
+        .gradient-dark { background: linear-gradient(135deg, #001F5B 0%, #1C2A4A 100%); }
         .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(13, 148, 136, 0.3); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0, 104, 99, 0.3); }
         .glass { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); }
-        .glass-dark { background: rgba(30, 27, 75, 0.95); backdrop-filter: blur(20px); }
+        .glass-dark { background: rgba(0, 31, 91, 0.95); backdrop-filter: blur(20px); }
         .fade-in { animation: fadeIn 0.6s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .pulse-glow { animation: pulseGlow 2s infinite; }
-        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 20px rgba(13, 148, 136, 0.3); } 50% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.5); } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 104, 99, 0.3); } 50% { box-shadow: 0 0 40px rgba(19, 122, 118, 0.5); } }
         .float { animation: float 6s ease-in-out infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 16px 28px; border-radius: 16px; color: white; font-weight: 600; z-index: 1000; transform: translateY(120px); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .toast.show { transform: translateY(0); }
-        .toast-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
-        .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .status-pending { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
-        .status-validated { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+        .toast-success { background: linear-gradient(135deg, #006863, #005B57); }
+        .toast-error { background: linear-gradient(135deg, #9A6E6F, #7E5556); }
+        .status-pending { background: linear-gradient(135deg, #FCE9CE, #F9D6A3); color: #945B0D; }
+        .status-validated { background: linear-gradient(135deg, #C2E1DE, #8FC9C6); color: #004E4A; }
         .timer-pulse { animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         .letter-box { flex-shrink: 0; }
         .check-mark { flex-shrink: 0; }
         .meta-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-right: 6px; }
-        .meta-source-emd { background: #ccfbf1; color: #0d9488; }
-        .meta-source-residanat { background: #fef3c7; color: #d97706; }
-        .meta-source-rattrapage { background: #d1fae5; color: #059669; }
-        .meta-year { background: #fce7f3; color: #db2777; }
-        .meta-course { background: #cffafe; color: #0891b2; }
+        .meta-source-emd { background: #C2E1DE; color: #006863; }
+        .meta-source-residanat { background: #FCE9CE; color: #B87210; }
+        .meta-source-rattrapage { background: #FCF3F3; color: #7E5556; }
+        .meta-year { background: #E9EDF7; color: #001F5B; }
+        .meta-course { background: #F1F4F8; color: #4A4A4A; }
         .active-sidebar { background: rgba(255,255,255,0.12) !important; color: white !important; }
         /* QCM Page Enhancements */
         .qcm-option { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; min-height: 56px; }
-        .qcm-option::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(13,148,136,0.05), rgba(6,182,212,0.05)); opacity: 0; transition: opacity 0.3s; }
-        .qcm-option:hover { border-color: #0d9488; background: #f0fdfa; }
+        .qcm-option::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0, 31, 91,0.05), rgba(0, 31, 91,0.05)); opacity: 0; transition: opacity 0.3s; }
+        .qcm-option:hover { border-color: #001F5B; background: #E9EDF7; }
         .qcm-option:hover::before { opacity: 1; }
         .qcm-option:active { transform: scale(0.98); }
-        .qcm-option.selected { transform: scale(1.01); box-shadow: 0 4px 20px rgba(13,148,136,0.2); border-color: #0d9488; background: linear-gradient(135deg, #ccfbf1, #cffafe); }
+        .qcm-option.selected { transform: scale(1.01); box-shadow: 0 4px 20px rgba(0, 31, 91,0.2); border-color: #001F5B; background: linear-gradient(135deg, #E9EDF7, #D3DBF0); }
         .qcm-option.selected::before { opacity: 1; }
-        .qcm-option.correct { transform: scale(1.01); box-shadow: 0 4px 20px rgba(34,197,94,0.2); border-color: #22c55e; background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
-        .qcm-option.wrong { transform: scale(0.98); border-color: #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca); }
+        .qcm-option.correct { transform: scale(1.01); box-shadow: 0 4px 20px rgba(0, 104, 99,0.2); border-color: #006863; background: linear-gradient(135deg, #C2E1DE, #8FC9C6); }
+        .qcm-option.wrong { transform: scale(0.98); border-color: #9A6E6F; background: linear-gradient(135deg, #F9E7E7, #F2D0D0); }
         .qcm-option.correct::after, .qcm-option.wrong::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 0 4px 4px 0; }
-        .qcm-option.correct::after { background: #22c55e; }
-        .qcm-option.wrong::after { background: #ef4444; }
-        .qcm-option.selected .letter-box { background: #0d9488; color: white; }
-        .qcm-option.selected .check-mark { background: #0d9488; border-color: #0d9488; }
+        .qcm-option.correct::after { background: #006863; }
+        .qcm-option.wrong::after { background: #9A6E6F; }
+        .qcm-option.selected .letter-box { background: #001F5B; color: white; }
+        .qcm-option.selected .check-mark { background: #001F5B; border-color: #001F5B; }
         .qcm-option.selected .check-mark i { opacity: 1; }
-        .qcm-option.correct .letter-box { background: #22c55e; color: white; }
-        .qcm-option.correct .check-mark { background: #22c55e; border-color: #22c55e; }
+        .qcm-option.correct .letter-box { background: #006863; color: white; }
+        .qcm-option.correct .check-mark { background: #006863; border-color: #006863; }
         .qcm-option.correct .check-mark i { opacity: 1; }
-        .qcm-option.wrong .letter-box { background: #ef4444; color: white; }
-        .qcm-option.wrong .check-mark { background: #ef4444; border-color: #ef4444; }
+        .qcm-option.wrong .letter-box { background: #9A6E6F; color: white; }
+        .qcm-option.wrong .check-mark { background: #9A6E6F; border-color: #9A6E6F; }
         .qcm-option.wrong .check-mark i { opacity: 1; }
         .qcm-verify-btn { position: relative; overflow: hidden; }
         .qcm-verify-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s; }
@@ -79,35 +115,35 @@
         .qcm-progress-ring { transition: stroke-dashoffset 0.5s ease; }
         .qcm-question-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s; cursor: pointer; }
         .qcm-question-dot.active { transform: scale(1.4); }
-        .qcm-question-dot.answered { background: #0d9488; }
-        .qcm-question-dot.current { background: #06b6d4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
-        .qcm-question-dot.unanswered { background: #cbd5e1; }
-        .qcm-question-dot.skipped { background: #f59e0b; }
-        .qcm-key-hint { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 700; color: #94a3b8; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #e2e8f0; pointer-events: none; opacity: 0.7; }
-        .qcm-option:hover .qcm-key-hint { opacity: 1; color: #0d9488; border-color: #0d9488; }
-        @keyframes optionPulse { 0% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); } 70% { box-shadow: 0 0 0 8px rgba(13,148,136,0); } 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0); } }
+        .qcm-question-dot.answered { background: #006863; }
+        .qcm-question-dot.current { background: #137A76; box-shadow: 0 0 8px rgba(19, 122, 118,0.5); }
+        .qcm-question-dot.unanswered { background: #CFD5DF; }
+        .qcm-question-dot.skipped { background: #F29E2E; }
+        .qcm-key-hint { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 700; color: #BA8D8F; background: #F1F4F8; padding: 1px 5px; border-radius: 4px; border: 1px solid #E2E7EE; pointer-events: none; opacity: 0.7; }
+        .qcm-option:hover .qcm-key-hint { opacity: 1; color: #001F5B; border-color: #001F5B; }
+        @keyframes optionPulse { 0% { box-shadow: 0 0 0 0 rgba(0, 104, 99,0.4); } 70% { box-shadow: 0 0 0 8px rgba(0, 104, 99,0); } 100% { box-shadow: 0 0 0 0 rgba(0, 104, 99,0); } }
         .qcm-option.selected { animation: optionPulse 0.4s ease-out; }
         @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .qcm-slide-in { animation: slideInUp 0.35s ease-out; }
-        @keyframes correctFlash { 0% { background-color: rgba(34,197,94,0.3); } 100% { background-color: transparent; } }
+        @keyframes correctFlash { 0% { background-color: rgba(0, 104, 99,0.3); } 100% { background-color: transparent; } }
         .qcm-correct-flash { animation: correctFlash 0.8s ease-out; }
         @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
         .qcm-wrong-shake { animation: wrongShake 0.4s ease-out; }
-        .qcm-sticky-actions { position: sticky; bottom: 0; z-index: 20; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; padding: 12px 0; margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; }
+        .qcm-sticky-actions { position: sticky; bottom: 0; z-index: 20; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #E2E7EE; padding: 12px 0; margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; }
         .confetti-piece { position: fixed; width: 10px; height: 10px; z-index: 9999; pointer-events: none; animation: confettiFall 3s ease-out forwards; }
         #btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
-        .playlist-icon-indigo { background: #dbeafe; } .playlist-icon-indigo i { color: #2563eb; }
-        .playlist-icon-emerald { background: #d1fae5; } .playlist-icon-emerald i { color: #10b981; }
-        .playlist-icon-amber { background: #fef3c7; } .playlist-icon-amber i { color: #f59e0b; }
-        .playlist-icon-rose { background: #ffe4e6; } .playlist-icon-rose i { color: #f43f5e; }
-        .playlist-icon-cyan { background: #cffafe; } .playlist-icon-cyan i { color: #06b6d4; }
-        .playlist-icon-violet { background: #ede9fe; } .playlist-icon-violet i { color: #8b5cf6; }
-        .playlist-btn-indigo { background: #eff6ff; color: #2563eb; } .playlist-btn-indigo:hover { background: #dbeafe; }
-        .playlist-btn-emerald { background: #ecfdf5; color: #10b981; } .playlist-btn-emerald:hover { background: #d1fae5; }
-        .playlist-btn-amber { background: #fffbeb; color: #f59e0b; } .playlist-btn-amber:hover { background: #fef3c7; }
-        .playlist-btn-rose { background: #fff1f2; color: #f43f5e; } .playlist-btn-rose:hover { background: #ffe4e6; }
-        .playlist-btn-cyan { background: #ecfeff; color: #06b6d4; } .playlist-btn-cyan:hover { background: #cffafe; }
-        .playlist-btn-violet { background: #f5f3ff; color: #8b5cf6; } .playlist-btn-violet:hover { background: #ede9fe; }
+        .playlist-icon-indigo { background: #D3DBF0; } .playlist-icon-indigo i { color: #001F5B; }
+        .playlist-icon-emerald { background: #C2E1DE; } .playlist-icon-emerald i { color: #006863; }
+        .playlist-icon-amber { background: #FCE9CE; } .playlist-icon-amber i { color: #F29E2E; }
+        .playlist-icon-rose { background: #FCF3F3; } .playlist-icon-rose i { color: #9A6E6F; }
+        .playlist-icon-cyan { background: #C4E5E2; } .playlist-icon-cyan i { color: #137A76; }
+        .playlist-icon-violet { background: #D3DBF0; } .playlist-icon-violet i { color: #34499A; }
+        .playlist-btn-indigo { background: #E9EDF7; color: #001F5B; } .playlist-btn-indigo:hover { background: #D3DBF0; }
+        .playlist-btn-emerald { background: #E6F2F1; color: #006863; } .playlist-btn-emerald:hover { background: #C2E1DE; }
+        .playlist-btn-amber { background: #FEF6EC; color: #F29E2E; } .playlist-btn-amber:hover { background: #FCE9CE; }
+        .playlist-btn-rose { background: #FCF3F3; color: #9A6E6F; } .playlist-btn-rose:hover { background: #F9E7E7; }
+        .playlist-btn-cyan { background: #E6F3F2; color: #137A76; } .playlist-btn-cyan:hover { background: #C4E5E2; }
+        .playlist-btn-violet { background: #E9EDF7; color: #34499A; } .playlist-btn-violet:hover { background: #D3DBF0; }
         @keyframes confettiFall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(100vh) rotate(720deg); } }
         @keyframes shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
         
@@ -271,64 +307,64 @@
         }
 
         .dark { color-scheme: dark; }
-        .dark body { background: #0f172a; color: #e2e8f0; }
-        .dark .bg-white { background: #1e293b !important; }
-        .dark .bg-slate-50 { background: #0f172a !important; }
-        .dark .bg-slate-100 { background: #1e293b !important; }
-        .dark .text-slate-900 { color: #f1f5f9 !important; }
-        .dark .text-slate-800 { color: #f1f5f9 !important; }
-        .dark .text-slate-700 { color: #cbd5e1 !important; }
-        .dark .text-slate-600 { color: #94a3b8 !important; }
-        .dark .text-slate-500 { color: #64748b !important; }
-        .dark .border-slate-200 { border-color: #334155 !important; }
-        .dark .border-slate-100 { border-color: #334155 !important; }
-        .dark .bg-gradient-to-br { background: linear-gradient(to bottom right, #1e293b, #0f172a) !important; }
-        .dark .card-hover { background: #1e293b !important; border-color: #334155 !important; }
-        .dark input, .dark textarea, .dark select { background: #1e293b !important; color: #f1f5f9 !important; border-color: #334155 !important; }
-        .dark .option-card { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .option-card:hover { background: #334155 !important; }
-        .dark .option-card .text-slate-700 { color: #cbd5e1 !important; }
-        .dark .option-card .text-slate-600 { color: #94a3b8 !important; }
-        .dark .quiz-header { background: #1e293b !important; }
-        .dark .quiz-body { background: #0f172a !important; }
-        .dark .sidebar { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .sidebar-section { background: #0f172a !important; }
-        .dark .sidebar-title { color: #f1f5f9 !important; }
-        .dark .sidebar-item { color: #94a3b8 !important; }
-        .dark .sidebar-item:hover { background: #334155 !important; color: #f1f5f9 !important; }
-        .dark .filters-panel { background: #1e293b !important; }
-        .dark .filter-group-title { color: #f1f5f9 !important; }
-        .dark .filter-label { color: #cbd5e1 !important; }
-        .dark .checkbox-label { color: #cbd5e1 !important; }
-        .dark .courses-list { background: #0f172a !important; }
-        .dark .course-chip { background: #334155 !important; color: #e2e8f0 !important; border-color: #475569 !important; }
-        .dark .course-chip:hover { background: #475569 !important; }
-        .dark .course-chip.active { background: #0d9488 !important; color: white !important; }
+        .dark body { background: #001F5B; color: #E2E7EE; }
+        .dark .bg-white { background: #1C2A4A !important; }
+        .dark .bg-slate-50 { background: #001F5B !important; }
+        .dark .bg-slate-100 { background: #1C2A4A !important; }
+        .dark .text-slate-900 { color: #F1F4F8 !important; }
+        .dark .text-slate-800 { color: #F1F4F8 !important; }
+        .dark .text-slate-700 { color: #CFD5DF !important; }
+        .dark .text-slate-600 { color: #BA8D8F !important; }
+        .dark .text-slate-500 { color: #BA8D8F !important; }
+        .dark .border-slate-200 { border-color: #2A3450 !important; }
+        .dark .border-slate-100 { border-color: #2A3450 !important; }
+        .dark .bg-gradient-to-br { background: linear-gradient(to bottom right, #1C2A4A, #001F5B) !important; }
+        .dark .card-hover { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark input, .dark textarea, .dark select { background: #1C2A4A !important; color: #F1F4F8 !important; border-color: #2A3450 !important; }
+        .dark .option-card { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .option-card:hover { background: #2A3450 !important; }
+        .dark .option-card .text-slate-700 { color: #CFD5DF !important; }
+        .dark .option-card .text-slate-600 { color: #BA8D8F !important; }
+        .dark .quiz-header { background: #1C2A4A !important; }
+        .dark .quiz-body { background: #001F5B !important; }
+        .dark .sidebar { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .sidebar-section { background: #001F5B !important; }
+        .dark .sidebar-title { color: #F1F4F8 !important; }
+        .dark .sidebar-item { color: #BA8D8F !important; }
+        .dark .sidebar-item:hover { background: #2A3450 !important; color: #F1F4F8 !important; }
+        .dark .filters-panel { background: #1C2A4A !important; }
+        .dark .filter-group-title { color: #F1F4F8 !important; }
+        .dark .filter-label { color: #CFD5DF !important; }
+        .dark .checkbox-label { color: #CFD5DF !important; }
+        .dark .courses-list { background: #001F5B !important; }
+        .dark .course-chip { background: #2A3450 !important; color: #E2E7EE !important; border-color: #414E74 !important; }
+        .dark .course-chip:hover { background: #414E74 !important; }
+        .dark .course-chip.active { background: #006863 !important; color: white !important; }
         .dark .meta-badge { opacity: 0.9; }
-        .dark .modal-content { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .modal-title { color: #f1f5f9 !important; }
-        .dark .stat-card { background: #1e293b !important; }
-        .dark .stat-value { color: #f1f5f9 !important; }
-        .dark .stat-label { color: #94a3b8 !important; }
-        .dark .progress-bar { background: #334155 !important; }
-        .dark .progress-fill { background: linear-gradient(90deg, #0d9488, #06b6d4) !important; }
-        .dark .features-section { background: #0f172a !important; }
-        .dark .pricing-section { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important; }
-        .dark .pricing-card { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .pricing-price { color: #f1f5f9 !important; }
-        .dark .pricing-features li { color: #94a3b8 !important; }
-        .dark .landing-page { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%) !important; }
-        .dark .playlist-card { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .playlist-name { color: #f1f5f9 !important; }
-        .dark .playlist-desc { color: #94a3b8 !important; }
-        .dark .faq-item { background: #1e293b !important; border-color: #334155 !important; }
-        .dark .faq-item .text-slate-900 { color: #f1f5f9 !important; }
-        .dark .faq-item .text-slate-500 { color: #94a3b8 !important; }
-        .dark .qcm-key-hint { background: #334155 !important; color: #94a3b8 !important; border-color: #475569 !important; }
-        .dark .qcm-option:hover .qcm-key-hint { color: #06b6d4 !important; border-color: #06b6d4 !important; }
-        .dark .qcm-sticky-actions { background: rgba(30,41,59,0.95) !important; border-color: #334155 !important; }
-        .dark .qcm-question-dot.unanswered { background: #475569 !important; }
-        .dark #question-card { background: #1e293b !important; border-color: #334155 !important; }
+        .dark .modal-content { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .modal-title { color: #F1F4F8 !important; }
+        .dark .stat-card { background: #1C2A4A !important; }
+        .dark .stat-value { color: #F1F4F8 !important; }
+        .dark .stat-label { color: #BA8D8F !important; }
+        .dark .progress-bar { background: #2A3450 !important; }
+        .dark .progress-fill { background: linear-gradient(90deg, #006863, #137A76) !important; }
+        .dark .features-section { background: #001F5B !important; }
+        .dark .pricing-section { background: linear-gradient(180deg, #001F5B 0%, #1C2A4A 100%) !important; }
+        .dark .pricing-card { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .pricing-price { color: #F1F4F8 !important; }
+        .dark .pricing-features li { color: #BA8D8F !important; }
+        .dark .landing-page { background: linear-gradient(135deg, #001F5B 0%, #1C2A4A 50%, #001F5B 100%) !important; }
+        .dark .playlist-card { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .playlist-name { color: #F1F4F8 !important; }
+        .dark .playlist-desc { color: #BA8D8F !important; }
+        .dark .faq-item { background: #1C2A4A !important; border-color: #2A3450 !important; }
+        .dark .faq-item .text-slate-900 { color: #F1F4F8 !important; }
+        .dark .faq-item .text-slate-500 { color: #BA8D8F !important; }
+        .dark .qcm-key-hint { background: #2A3450 !important; color: #BA8D8F !important; border-color: #414E74 !important; }
+        .dark .qcm-option:hover .qcm-key-hint { color: #137A76 !important; border-color: #137A76 !important; }
+        .dark .qcm-sticky-actions { background: rgba(28, 42, 74,0.95) !important; border-color: #2A3450 !important; }
+        .dark .qcm-question-dot.unanswered { background: #414E74 !important; }
+        .dark #question-card { background: #1C2A4A !important; border-color: #2A3450 !important; }
     </style>
 
 </head>
@@ -340,20 +376,20 @@
 <div id="landing-section">
 
     <!-- HERO SECTION -->
-    <div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0c1222] via-[#0f1d36] to-[#0a1628]">
+    <div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#001238] via-[#001F5B] to-[#000B26]">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-teal-600/20 rounded-full blur-[120px] animate-pulse" style="animation-duration:4s"></div>
             <div class="absolute top-1/3 -right-20 w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[100px] animate-pulse" style="animation-duration:6s;animation-delay:2s"></div>
             <div class="absolute -bottom-20 left-1/3 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[80px] animate-pulse" style="animation-duration:5s;animation-delay:1s"></div>
-            <div class="absolute inset-0" style="background-image:radial-gradient(rgba(13,148,136,0.08) 1px,transparent 1px);background-size:40px 40px"></div>
+            <div class="absolute inset-0" style="background-image:radial-gradient(rgba(0, 104, 99,0.08) 1px,transparent 1px);background-size:40px 40px"></div>
         </div>
 
         <!-- Nav -->
         <nav class="relative z-10 flex items-center justify-between px-4 md:px-8 py-4 md:py-5">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="showLanding()">
                 <svg class="w-10 h-10 md:w-11 md:h-11 drop-shadow-lg group-hover:scale-110 transition-all duration-300" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                    <defs><linearGradient id="aura-g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs>
-                    <circle cx="60" cy="60" r="56" fill="#0f172a"/>
+                    <defs><linearGradient id="aura-g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#006863"/><stop offset="50%" style="stop-color:#00736D"/><stop offset="100%" style="stop-color:#34499A"/></linearGradient></defs>
+                    <circle cx="60" cy="60" r="56" fill="#001F5B"/>
                     <circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g)" stroke-width="3"/>
                     <rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g)"/>
                     <path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g)" stroke-width="2.5" stroke-linecap="round"/>
@@ -514,7 +550,7 @@
 
     <!-- HOW IT WORKS SECTION -->
     <div id="how-it-works" class="py-20 md:py-28 bg-white relative overflow-hidden">
-        <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(rgba(13,148,136,0.04) 1px,transparent 1px);background-size:30px 30px"></div>
+        <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(rgba(0, 104, 99,0.04) 1px,transparent 1px);background-size:30px 30px"></div>
         <div class="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
             <div class="text-center mb-16">
                 <div class="inline-flex items-center gap-2 bg-teal-50 rounded-full px-4 py-1.5 mb-4 border border-teal-100">
@@ -664,7 +700,7 @@
 
             <div class="max-w-md mx-auto">
                 <!-- Résidanat - Featured -->
-                <div class="relative bg-gradient-to-br from-[#0f1d36] to-[#0c1222] rounded-3xl p-8 card-hover text-center text-white cursor-pointer border border-blue-500/20 hover:border-blue-400/40 hover:shadow-2xl hover:shadow-teal-500/20 transition-all duration-300" onclick="selectPlan('residanat')">
+                <div class="relative bg-gradient-to-br from-[#001F5B] to-[#001238] rounded-3xl p-8 card-hover text-center text-white cursor-pointer border border-blue-500/20 hover:border-blue-400/40 hover:shadow-2xl hover:shadow-teal-500/20 transition-all duration-300" onclick="selectPlan('residanat')">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-teal-500 to-cyan-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-lg">POPULAIRE</div>
                     <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30"><i class="fas fa-crown text-white text-lg"></i></div>
                     <h3 class="font-bold mb-2 text-lg">Résidanat</h3>
@@ -774,7 +810,7 @@
     </div>
 
     <!-- FINAL CTA -->
-    <div class="py-20 md:py-28 bg-gradient-to-br from-[#0c1222] via-[#0f1d36] to-[#0a1628] relative overflow-hidden">
+    <div class="py-20 md:py-28 bg-gradient-to-br from-[#001238] via-[#001F5B] to-[#000B26] relative overflow-hidden">
         <div class="absolute inset-0 pointer-events-none">
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-600/15 rounded-full blur-[120px]"></div>
         </div>
@@ -795,12 +831,12 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="bg-[#080e1a] py-16 relative">
+    <footer class="bg-[#001238] py-16 relative">
         <div class="max-w-6xl mx-auto px-4 md:px-8">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
                 <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-4">
-                        <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#0f172a"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g4)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g4)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g4)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g4)" opacity="0.8"/></svg>
+                        <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#006863"/><stop offset="50%" style="stop-color:#00736D"/><stop offset="100%" style="stop-color:#34499A"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#001F5B"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g4)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g4)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g4)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g4)" opacity="0.8"/></svg>
                         <div>
                             <h3 class="text-lg font-extrabold text-white">AURA</h3>
                             <p class="text-[10px] text-teal-300/70 tracking-[0.15em] uppercase">Académie Universitaire</p>
@@ -869,7 +905,7 @@
             <div class="mt-6 space-y-3">
                 <div class="relative">
                     <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/10"></div></div>
-                    <div class="relative flex justify-center text-sm"><span class="px-2 bg-[#1e3a5f] text-teal-300">Ou démo rapide</span></div>
+                    <div class="relative flex justify-center text-sm"><span class="px-2 bg-[#00256B] text-teal-300">Ou démo rapide</span></div>
                 </div>
                 <div class="grid grid-cols-1 gap-3">
                     <button onclick="quickLogin('student')" class="bg-white/5 border border-white/10 text-white py-2.5 rounded-xl hover:bg-white/10 transition text-sm font-medium"><i class="fas fa-user-graduate mr-2"></i>Démo Étudiant</button>
@@ -1037,7 +1073,7 @@
     <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 hidden md:block border-r border-white/5">
         <div class="p-6 border-b border-white/5">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showLanding()">
-                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#059669"/><stop offset="50%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#0f172a"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g5)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g5)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g5)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g5)" opacity="0.8"/></svg>
+                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#006863"/><stop offset="50%" style="stop-color:#00736D"/><stop offset="100%" style="stop-color:#34499A"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#001F5B"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g5)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g5)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g5)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g5)" opacity="0.8"/></svg>
                 <div><h3 class="font-display font-bold text-lg">AURA</h3><p class="text-xs text-teal-300" id="user-level-display">3ème Année</p></div>
             </div>
         </div>
@@ -1091,7 +1127,7 @@
             </div>
 
             <!-- COUNTDOWN RESIDANAT -->
-            <div class="mb-8 bg-gradient-to-r from-[#0f1d36] via-[#0d2847] to-[#0a1f3d] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
+            <div class="mb-8 bg-gradient-to-r from-[#001F5B] via-[#00256B] to-[#001B50] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
                 <div class="absolute inset-0 pointer-events-none">
                     <div class="absolute -top-20 -right-20 w-60 h-60 bg-teal-500/10 rounded-full blur-[60px] animate-pulse" style="animation-duration:4s"></div>
                     <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-[40px] animate-pulse" style="animation-duration:5s;animation-delay:1s"></div>
@@ -1709,14 +1745,14 @@
     <div id="admin-sidebar-overlay" class="admin-overlay" onclick="closeAdminSidebar()"></div>
     <div class="admin-mobile-header fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <button onclick="openAdminSidebar()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-bars text-lg"></i></button>
-        <div class="flex items-center gap-2">        <svg class="w-8 h-8" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#f97316"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1e293b"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g2)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g2)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g2)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg><span class="font-bold text-sm">AURA Admin</span></div>
+        <div class="flex items-center gap-2">        <svg class="w-8 h-8" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F29E2E"/><stop offset="100%" style="stop-color:#F29E2E"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1C2A4A"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g2)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g2)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g2)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg><span class="font-bold text-sm">AURA Admin</span></div>
         <button onclick="backToApp()" class="p-2 hover:bg-white/10 rounded-lg transition"><i class="fas fa-arrow-left text-lg"></i></button>
     </div>
     <div class="pt-14 md:pt-0 md:hidden"></div>
     <aside class="fixed left-0 top-0 h-full w-72 bg-slate-900 text-white overflow-y-auto z-50 border-r border-white/5">
         <div class="p-6 border-b border-white/5">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showLanding()">
-                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#f97316"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1e293b"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g3)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g3)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g3)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g3)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg>
+                <svg class="w-10 h-10 shadow-lg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aura-g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F29E2E"/><stop offset="100%" style="stop-color:#F29E2E"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#1C2A4A"/><circle cx="60" cy="52" r="18" fill="none" stroke="url(#aura-g3)" stroke-width="3"/><rect x="55" y="34" width="10" height="8" rx="2" fill="url(#aura-g3)"/><path d="M42 70 Q60 82 78 70" fill="none" stroke="url(#aura-g3)" stroke-width="2.5" stroke-linecap="round"/><circle cx="60" cy="52" r="6" fill="url(#aura-g3)" opacity="0.8"/><text x="60" y="100" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="bold" font-size="14" letter-spacing="2">AURA</text></svg>
                 <div><h3 class="font-display font-bold text-lg">AURA Admin</h3><p class="text-xs text-amber-300">Panel de gestion</p></div>
             </div>
         </div>
@@ -5135,8 +5171,8 @@ function renderQuestion() {
         const correctLetters = toLetters(q.correct);
         const scoreText = scoringMode === 'all'
             ? (prevAnswer.isCorrect
-                ? '<span style="color: #16a34a; font-weight: bold;">✓ Correct ! +1 point</span>'
-                : '<span style="color: #dc2626; font-weight: bold;">✗ Incorrect</span>')
+                ? '<span style="color: #005B57; font-weight: bold;">✓ Correct ! +1 point</span>'
+                : '<span style="color: #7E5556; font-weight: bold;">✗ Incorrect</span>')
             : `<span style="font-weight: bold;">Score : ${prevAnswer.scorePercentage}%</span> (${prevAnswer.score.toFixed(2)}/${q.correct.length})`;
         const expText = (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') ? q.explanation : '';
         document.getElementById('explanation-text').innerHTML = `${expText}<br><br><strong>Bonne(s) réponse(s) : ${correctLetters}</strong><br>${scoreText}`;
@@ -5423,8 +5459,8 @@ function verifyAnswer() {
     
     const scoreText = scoringMode === 'all'
         ? (scoreResult.isCorrect
-            ? '<span style="color: #16a34a; font-weight: bold;">✓ Correct ! +1 point</span>'
-            : '<span style="color: #dc2626; font-weight: bold;">✗ Incorrect</span>')
+            ? '<span style="color: #005B57; font-weight: bold;">✓ Correct ! +1 point</span>'
+            : '<span style="color: #7E5556; font-weight: bold;">✗ Incorrect</span>')
         : `<span style="font-weight: bold;">Score : ${scoreResult.scorePercentage}%</span> (${scoreResult.score.toFixed(2)}/${validCorrect.length})`;
 
     const expText2 = (q.explanation && q.explanation !== 'null' && q.explanation !== 'undefined') ? q.explanation : '';
@@ -5820,7 +5856,7 @@ En tant que professeur de pharmacie expert, explique en français pourquoi la bo
 }
 
 function launchConfetti() {
-    const colors = ['#0d9488', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#0891b2', '#ec4899'];
+    const colors = ['#001F5B', '#006863', '#F29E2E', '#BA8D8F', '#137A76', '#34499A', '#7E5556'];
     for (let i = 0; i < 60; i++) {
         const piece = document.createElement('div');
         piece.className = 'confetti-piece';
@@ -6152,7 +6188,7 @@ function renderStats() {
                 type: 'radar',
                 data: {
                     labels: moduleModules.map(m => m.replace('Module ','')),
-                    datasets: [{ label: 'Progression (%)', data: moduleData, backgroundColor: 'rgba(99, 102, 241, 0.2)', borderColor: 'rgba(99, 102, 241, 1)', pointBackgroundColor: 'rgba(99, 102, 241, 1)' }]
+                    datasets: [{ label: 'Progression (%)', data: moduleData, backgroundColor: 'rgba(0, 31, 91, 0.2)', borderColor: 'rgba(0, 31, 91, 1)', pointBackgroundColor: 'rgba(0, 31, 91, 1)' }]
                 },
                 options: { scales: { r: { beginAtZero: true, max: 100 } } }
             });
@@ -6163,7 +6199,7 @@ function renderStats() {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: 'Score (%)', data: scoreHistory, borderColor: 'rgba(139, 92, 246, 1)', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.4 }]
+                    datasets: [{ label: 'Score (%)', data: scoreHistory, borderColor: 'rgba(52, 73, 154, 1)', backgroundColor: 'rgba(52, 73, 154, 0.1)', fill: true, tension: 0.4 }]
                 },
                 options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
             });
@@ -6894,7 +6930,7 @@ async function renderAdminOverview() {
         const levelLabels = ['1ère', '2ème', '3ème', '4ème', '5ème', 'Résidanat'];
         const levelKeys = ['1', '2', '3', '4', '5', 'residanat'];
         const levelData = levelKeys.map(k => students.filter(s => s.level === k).length);
-        const colorsPalette = ['#0d9488', '#06b6d4', '#10b981', '#2563eb', '#f59e0b', '#ef4444'];
+        const colorsPalette = ['#006863', '#137A76', '#34499A', '#001F5B', '#F29E2E', '#BA8D8F'];
         const ctx = document.getElementById('levelChart');
         if (ctx && typeof Chart !== 'undefined') {
             if (window._levelChart) window._levelChart.destroy();
@@ -7864,7 +7900,7 @@ function initAdminCharts() {
         }
         const ctx2 = document.getElementById('revenueChart');
         if (ctx2) {
-            window._revenueChart = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: monthLabels, datasets: [{ label: 'Revenus (DZD)', data: monthData, backgroundColor: 'rgba(13, 148, 136, 0.8)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
+            window._revenueChart = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: monthLabels, datasets: [{ label: 'Revenus (DZD)', data: monthData, backgroundColor: 'rgba(0, 104, 99, 0.8)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
         }
         const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
         const dayData = new Array(7).fill(0);
@@ -7878,7 +7914,7 @@ function initAdminCharts() {
         });
         const ctx3 = document.getElementById('activityChart');
         if (ctx3) {
-            window._activityChart = new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: dayLabels, datasets: [{ label: 'Sessions', data: dayData, borderColor: 'rgba(6, 182, 212, 1)', fill: true, backgroundColor: 'rgba(6, 182, 212, 0.1)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
+            window._activityChart = new Chart(ctx3.getContext('2d'), { type: 'line', data: { labels: dayLabels, datasets: [{ label: 'Sessions', data: dayData, borderColor: 'rgba(19, 122, 118, 1)', fill: true, backgroundColor: 'rgba(19, 122, 118, 0.1)' }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
         }
     }, 100);
 }
