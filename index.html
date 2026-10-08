@@ -1351,20 +1351,17 @@
                     <h3 id="question-text" class="text-lg font-semibold text-slate-900 leading-relaxed mb-5">...</h3>
                     <!-- Options -->
                     <div id="options-container" class="space-y-2.5"></div>
-                    <!-- Vérifier : DIRECTEMENT sous les options -->
-                    <div class="mt-4 text-center">
-                        <button onclick="verifyAnswer()" id="btn-verify" class="qcm-verify-btn px-10 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed mx-auto"><i class="fas fa-check"></i><span id="btn-verify-text">Vérifier</span></button>
-                        <span id="keyboard-hint" class="text-[10px] text-slate-400 mt-1.5 block hidden md:block">Raccourci : <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">A-E</kbd> sélectionner · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">↵</kbd> valider · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">S</kbd> passer</span>
-                    </div>
-                    <!-- Précédent : en bas à gauche, discrètement -->
-                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-100">
-                        <div class="flex items-center gap-2">
-                            <button onclick="prevQuestion()" id="btn-prev" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-medium"><i class="fas fa-chevron-left text-[10px]"></i>Précédent</button>
-                            <button onclick="skipQuestion()" id="btn-skip" class="hidden px-4 py-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition flex items-center gap-1.5 text-xs font-semibold"><i class="fas fa-forward text-[10px]"></i>Passer</button>
-                        </div>
+                    <!-- Actions : Précédent · Passer · Vérifier SUR LA MÊME LIGNE -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                        <button onclick="prevQuestion()" id="btn-prev" class="px-3 sm:px-4 py-3 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-medium"><i class="fas fa-chevron-left text-[10px]"></i>Précédent</button>
+                        <button onclick="skipQuestion()" id="btn-skip" class="hidden px-3 sm:px-4 py-3 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition flex items-center gap-1.5 text-xs font-semibold"><i class="fas fa-forward text-[10px]"></i>Passer</button>
+                        <button onclick="verifyAnswer()" id="btn-verify" class="qcm-verify-btn px-6 sm:px-10 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-check"></i><span id="btn-verify-text">Vérifier</span></button>
                         <div id="btn-next-container" class="hidden">
-                            <button onclick="nextQuestion()" id="btn-next" class="qcm-next-btn px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm">Question suivante<i class="fas fa-chevron-right text-xs"></i></button>
+                            <button onclick="nextQuestion()" id="btn-next" class="qcm-next-btn px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2 text-sm">Question suivante<i class="fas fa-chevron-right text-xs"></i></button>
                         </div>
+                    </div>
+                    <div class="mt-1.5 text-center">
+                        <span id="keyboard-hint" class="text-[10px] text-slate-400 hidden md:block">Raccourci : <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">A-E</kbd> sélectionner · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">↵</kbd> valider · <kbd class="px-1 py-0.5 bg-slate-100 rounded border text-[9px]">S</kbd> passer</span>
                     </div>
                     <!-- Explication (cachée par défaut) -->
                     <div id="explanation-box" class="hidden mt-4 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl qcm-slide-in">
